@@ -2,12 +2,13 @@
 #include <cassert>
 #include "SDL.h"
 
-auto const WIDTH = 800;
-auto const HEIGHT = 600;
+auto const WIDTH = 1024;
+auto const HEIGHT = 768;
 
 struct Input
 {
-  bool quit;
+  bool quit, restart;
+
   bool left, right, up, down;
   bool boost;
 };
@@ -18,7 +19,10 @@ void processInput(Input& input)
   while(SDL_PollEvent(&event))
   {
     if(event.type == SDL_QUIT)
+    {
       input.quit = true;
+      return;
+    }
 
     if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
     {
@@ -26,7 +30,10 @@ void processInput(Input& input)
       switch(event.key.keysym.scancode)
       {
       case SDL_SCANCODE_ESCAPE:
-        input.quit = true;
+        {
+          input.quit = true;
+          return;
+        }
       case SDL_SCANCODE_LSHIFT:
         input.boost = isPressed;
         break;
@@ -43,6 +50,31 @@ void processInput(Input& input)
         input.down = isPressed;
         break;
       }
+    }
+    else if(event.type == SDL_JOYAXISMOTION)
+    {
+      if(event.jaxis.axis == 0) // horizontal
+      {
+        input.left = event.jaxis.value < 0;
+        input.right = event.jaxis.value > 0;
+      }
+      else if(event.jaxis.axis == 1) // vertical
+      {
+        input.up = event.jaxis.value < 0;
+        input.down = event.jaxis.value > 0;
+      }
+    }
+    else if(event.type == SDL_JOYBUTTONDOWN)
+    {
+      input.restart = true;
+    }
+    else if(event.type == SDL_JOYBUTTONUP)
+    {
+      input.restart = false;
+    }
+    else
+    {
+      printf("Unknown event: %d\n", event.type);
     }
   }
 }
@@ -87,14 +119,20 @@ char g_board[HEIGHT][WIDTH];
 
 void initGame()
 {
+  g_bike = {};
   g_bike.x = WIDTH/2;
   g_bike.y = HEIGHT/2;
+  memset(g_board, 0, sizeof g_board);
 }
 
 void updateGame(Input input)
 {
   if(!g_bike.alive)
+  {
+    if(input.restart)
+      initGame();
     return;
+  }
 
   Direction wantedDirection = g_bike.direction;
 
@@ -131,7 +169,7 @@ void updateGame(Input input)
   g_board[g_bike.y][g_bike.x] = 1;
 }
 
-void drawScreen(SDL_Renderer* renderer, SDL_Surface* surface)
+void drawScreen(SDL_Renderer* renderer)
 {
   /* Select the color for drawing. It is set to red here. */
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -139,22 +177,16 @@ void drawScreen(SDL_Renderer* renderer, SDL_Surface* surface)
   /* Clear the entire screen to our selected color. */
   SDL_RenderClear(renderer);
 
-  // fill 'surface'
+  for(int row=0;row < HEIGHT;++row)
   {
-    Uint8* pels = (Uint8*)surface->pixels;
-
-    for(int row=0;row < HEIGHT;++row)
+    for(int col=0;col < WIDTH;++col)
     {
-      for(int col=0;col < WIDTH;++col)
+      int c = g_board[row][col] ? 255 : 0;
+      if(c)
       {
-        int c = g_board[row][col] ? 255 : 0;
-        if(c)
-        {
-          SDL_SetRenderDrawColor(renderer, c, c, c, 255);
-          SDL_RenderDrawPoint(renderer, col, row);
-        }
+        SDL_SetRenderDrawColor(renderer, c, c, c, 255);
+        SDL_RenderDrawPoint(renderer, col, row);
       }
-      pels += surface->pitch;
     }
   }
 
@@ -170,12 +202,26 @@ int main()
   auto window = SDL_CreateWindow("Literace", 0, 0, WIDTH, HEIGHT, 0);
   assert(window);
 
-  auto surface = SDL_CreateRGBSurface(0, WIDTH, HEIGHT, 32, 0, 0, 0, 0);
-  assert(surface);
-
   /* We must call SDL_CreateRenderer in order for draw calls to affect this window. */
   auto renderer = SDL_CreateRenderer(window, -1, 0);
   assert(renderer);
+
+  printf("Detected %d joysticks\n", SDL_NumJoysticks());
+
+  auto joy = SDL_JoystickOpen(0);
+
+  if(joy)
+  {
+    printf("Opened Joystick 0\n");
+    printf("Name: %s\n", SDL_JoystickNameForIndex(0));
+    printf("Number of Axes: %d\n", SDL_JoystickNumAxes(joy));
+    printf("Number of Buttons: %d\n", SDL_JoystickNumButtons(joy));
+    printf("Number of Balls: %d\n", SDL_JoystickNumBalls(joy));
+  }
+  else
+  {
+    printf("Couldn't open Joystick 0\n");
+  }
 
   initGame();
 
@@ -188,10 +234,10 @@ int main()
       break;
 
     updateGame(input);
-    drawScreen(renderer, surface);
+    drawScreen(renderer);
   }
 
-  SDL_FreeSurface(surface);
+  SDL_JoystickClose(joy);
   SDL_DestroyWindow(window);
 
   SDL_Quit();
