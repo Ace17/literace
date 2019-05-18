@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -ex
+g++ main.cpp `pkg-config sdl2 --cflags --libs`
+./a.out
