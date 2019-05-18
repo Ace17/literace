@@ -77,10 +77,10 @@ void processEvent(SDL_Event const& event, Input& input)
 
     printf("[%d] hat index: %d\n", info.which, info.hat);
 
-    input.players[info.which].left  = info.value == SDL_HAT_LEFT;
+    input.players[info.which].left = info.value == SDL_HAT_LEFT;
     input.players[info.which].right = info.value == SDL_HAT_RIGHT;
-    input.players[info.which].up    = info.value == SDL_HAT_UP;
-    input.players[info.which].down  = info.value == SDL_HAT_DOWN;
+    input.players[info.which].up = info.value == SDL_HAT_UP;
+    input.players[info.which].down = info.value == SDL_HAT_DOWN;
   }
   else if(event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
   {
@@ -89,6 +89,7 @@ void processEvent(SDL_Event const& event, Input& input)
     auto& info = event.jbutton;
 
     printf("[%d] %d\n", info.which, info.button);
+
     if(info.button == 0)
       input.players[info.which].boost = isPressed;
     else
@@ -103,6 +104,7 @@ void processEvent(SDL_Event const& event, Input& input)
 void processInput(Input& input)
 {
   SDL_Event event;
+
   while(SDL_PollEvent(&event))
     processEvent(event, input);
 }
@@ -118,11 +120,11 @@ enum class Direction
 
 static const int dirs[][2] =
 {
-  {0, 0},
-  {-1, 0},
-  {0, 1},
-  {1, 0},
-  {0, -1},
+  { 0, 0 },
+  { -1, 0 },
+  { 0, 1 },
+  { 1, 0 },
+  { 0, -1 },
 };
 
 bool isOpposed(Direction a, Direction b)
@@ -148,14 +150,16 @@ char g_board[HEIGHT][WIDTH];
 void initGame()
 {
   int k = 0;
+
   for(auto& bike : g_bikes)
   {
     bike = {};
-    bike.x = (k+1) * WIDTH/(MAX_PLAYERS+1);
-    bike.y = HEIGHT/2;
+    bike.x = (k + 1) * WIDTH / (MAX_PLAYERS + 1);
+    bike.y = HEIGHT / 2;
 
     ++k;
   }
+
   memset(g_board, 0, sizeof g_board);
 }
 
@@ -165,10 +169,13 @@ void updateBike(Bike& bike, PlayerInput input, int team)
 
   if(input.left)
     wantedDirection = Direction::Left;
+
   if(input.right)
     wantedDirection = Direction::Right;
+
   if(input.up)
     wantedDirection = Direction::Up;
+
   if(input.down)
     wantedDirection = Direction::Down;
 
@@ -186,8 +193,8 @@ void updateBike(Bike& bike, PlayerInput input, int team)
   bike.x += dx * speed;
   bike.y += dy * speed;
 
-  bike.x = (bike.x + WIDTH)%WIDTH;
-  bike.y = (bike.y + HEIGHT)%HEIGHT;
+  bike.x = (bike.x + WIDTH) % WIDTH;
+  bike.y = (bike.y + HEIGHT) % HEIGHT;
 
   if(dx || dy)
     if(g_board[bike.y][bike.x])
@@ -201,6 +208,7 @@ bool isGameOver()
   for(auto& bike : g_bikes)
     if(!bike.alive)
       return true;
+
   return false;
 }
 
@@ -210,10 +218,11 @@ void updateGame(Input input)
   {
     if(input.restart)
       initGame();
+
     return;
   }
 
-  for(int i=0;i < MAX_PLAYERS;++i)
+  for(int i = 0; i < MAX_PLAYERS; ++i)
     updateBike(g_bikes[i], input.players[i], i);
 }
 
@@ -232,11 +241,12 @@ void drawScreen(SDL_Renderer* renderer)
     { 0, 255, 0 },
   };
 
-  for(int row=0;row < HEIGHT;++row)
+  for(int row = 0; row < HEIGHT; ++row)
   {
-    for(int col=0;col < WIDTH;++col)
+    for(int col = 0; col < WIDTH; ++col)
     {
       int c = g_board[row][col];
+
       if(c)
       {
         int idx = (c - 1) % 4;
@@ -266,7 +276,7 @@ int main()
 
   SDL_Joystick* joys[MAX_PLAYERS];
 
-  for(int i=0;i < MAX_PLAYERS; ++i)
+  for(int i = 0; i < MAX_PLAYERS; ++i)
   {
     joys[i] = SDL_JoystickOpen(i);
 
@@ -286,11 +296,12 @@ int main()
 
   initGame();
 
-  Input input{};
+  Input input {};
 
   while(1)
   {
     processInput(input);
+
     if(input.quit)
       break;
 
@@ -298,7 +309,7 @@ int main()
     drawScreen(renderer);
   }
 
-  for(int i=0;i < MAX_PLAYERS;++i)
+  for(int i = 0; i < MAX_PLAYERS; ++i)
     SDL_JoystickClose(joys[i]);
 
   SDL_DestroyWindow(window);
