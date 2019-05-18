@@ -5,9 +5,6 @@
 auto const WIDTH = 800;
 auto const HEIGHT = 600;
 
-int x = 128;
-int y = 128;
-
 struct Input
 {
   bool quit;
@@ -80,14 +77,25 @@ bool isOpposed(Direction a, Direction b)
 
 struct Bike
 {
+  bool alive = true;
   int x, y;
   Direction direction;
 };
 
 Bike g_bike;
+char g_board[HEIGHT][WIDTH];
+
+void initGame()
+{
+  g_bike.x = WIDTH/2;
+  g_bike.y = HEIGHT/2;
+}
 
 void updateGame(Input input)
 {
+  if(!g_bike.alive)
+    return;
+
   Direction wantedDirection = g_bike.direction;
 
   if(input.left)
@@ -107,14 +115,23 @@ void updateGame(Input input)
   if(input.boost)
     speed = 2;
 
-  x += dirs[(int)g_bike.direction][0] * speed;
-  y += dirs[(int)g_bike.direction][1] * speed;
+  int dx = dirs[(int)g_bike.direction][0];
+  int dy = dirs[(int)g_bike.direction][1];
 
-  x = (x + WIDTH)%WIDTH;
-  y = (y + HEIGHT)%HEIGHT;
+  g_bike.x += dx * speed;
+  g_bike.y += dy * speed;
+
+  g_bike.x = (g_bike.x + WIDTH)%WIDTH;
+  g_bike.y = (g_bike.y + HEIGHT)%HEIGHT;
+
+  if(dx || dy)
+    if(g_board[g_bike.y][g_bike.x])
+      g_bike.alive = false;
+
+  g_board[g_bike.y][g_bike.x] = 1;
 }
 
-void drawScreen(SDL_Renderer* renderer)
+void drawScreen(SDL_Renderer* renderer, SDL_Surface* surface)
 {
   /* Select the color for drawing. It is set to red here. */
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -122,8 +139,24 @@ void drawScreen(SDL_Renderer* renderer)
   /* Clear the entire screen to our selected color. */
   SDL_RenderClear(renderer);
 
-  SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
-  SDL_RenderDrawPoint(renderer, x, y);
+  // fill 'surface'
+  {
+    Uint8* pels = (Uint8*)surface->pixels;
+
+    for(int row=0;row < HEIGHT;++row)
+    {
+      for(int col=0;col < WIDTH;++col)
+      {
+        int c = g_board[row][col] ? 255 : 0;
+        if(c)
+        {
+          SDL_SetRenderDrawColor(renderer, c, c, c, 255);
+          SDL_RenderDrawPoint(renderer, col, row);
+        }
+      }
+      pels += surface->pitch;
+    }
+  }
 
   /* Up until now everything was drawn behind the scenes.
      This will show the new, red contents of the window. */
@@ -137,9 +170,14 @@ int main()
   auto window = SDL_CreateWindow("Literace", 0, 0, WIDTH, HEIGHT, 0);
   assert(window);
 
+  auto surface = SDL_CreateRGBSurface(0, WIDTH, HEIGHT, 32, 0, 0, 0, 0);
+  assert(surface);
+
   /* We must call SDL_CreateRenderer in order for draw calls to affect this window. */
   auto renderer = SDL_CreateRenderer(window, -1, 0);
   assert(renderer);
+
+  initGame();
 
   Input input{};
 
@@ -150,10 +188,10 @@ int main()
       break;
 
     updateGame(input);
-    drawScreen(renderer);
-    SDL_Delay(10);
+    drawScreen(renderer, surface);
   }
 
+  SDL_FreeSurface(surface);
   SDL_DestroyWindow(window);
 
   SDL_Quit();
