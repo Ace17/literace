@@ -5,78 +5,105 @@
 auto const WIDTH = 1024;
 auto const HEIGHT = 768;
 
-struct Input
-{
-  bool quit, restart;
+auto const MAX_PLAYERS = 2;
 
+struct PlayerInput
+{
   bool left, right, up, down;
   bool boost;
 };
+
+struct Input
+{
+  bool quit, restart;
+  PlayerInput players[MAX_PLAYERS];
+};
+
+void processEvent(SDL_Event const& event, Input& input)
+{
+  if(event.type == SDL_QUIT)
+  {
+    input.quit = true;
+    return;
+  }
+
+  if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
+  {
+    bool isPressed = event.type == SDL_KEYDOWN;
+    switch(event.key.keysym.scancode)
+    {
+    case SDL_SCANCODE_ESCAPE:
+      {
+        input.quit = true;
+        return;
+      }
+    case SDL_SCANCODE_LSHIFT:
+      input.players[0].boost = isPressed;
+      break;
+    case SDL_SCANCODE_LEFT:
+      input.players[0].left = isPressed;
+      break;
+    case SDL_SCANCODE_RIGHT:
+      input.players[0].right = isPressed;
+      break;
+    case SDL_SCANCODE_UP:
+      input.players[0].up = isPressed;
+      break;
+    case SDL_SCANCODE_DOWN:
+      input.players[0].down = isPressed;
+      break;
+    }
+  }
+  else if(event.type == SDL_JOYAXISMOTION)
+  {
+    auto& info = event.jaxis;
+
+    printf("[%d] axis index: %d\n", info.which, info.axis);
+
+    if(info.axis == 0) // horizontal
+    {
+      input.players[info.which].left = info.value < 0;
+      input.players[info.which].right = info.value > 0;
+    }
+    else if(info.axis == 1) // vertical
+    {
+      input.players[info.which].up = info.value < 0;
+      input.players[info.which].down = info.value > 0;
+    }
+  }
+  else if(event.type == SDL_JOYHATMOTION)
+  {
+    auto& info = event.jhat;
+
+    printf("[%d] hat index: %d\n", info.which, info.hat);
+
+    input.players[info.which].left  = info.value == SDL_HAT_LEFT;
+    input.players[info.which].right = info.value == SDL_HAT_RIGHT;
+    input.players[info.which].up    = info.value == SDL_HAT_UP;
+    input.players[info.which].down  = info.value == SDL_HAT_DOWN;
+  }
+  else if(event.type == SDL_JOYBUTTONDOWN)
+  {
+    auto& info = event.jbutton;
+
+    printf("[%d] %d\n", info.which, info.button);
+    input.restart = true;
+  }
+  else if(event.type == SDL_JOYBUTTONUP)
+  {
+    input.restart = false;
+  }
+  else
+  {
+    printf("Unknown event: %d\n", event.type);
+  }
+}
 
 void processInput(Input& input)
 {
   SDL_Event event;
   while(SDL_PollEvent(&event))
-  {
-    if(event.type == SDL_QUIT)
-    {
-      input.quit = true;
-      return;
-    }
-
-    if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
-    {
-      bool isPressed = event.type == SDL_KEYDOWN;
-      switch(event.key.keysym.scancode)
-      {
-      case SDL_SCANCODE_ESCAPE:
-        {
-          input.quit = true;
-          return;
-        }
-      case SDL_SCANCODE_LSHIFT:
-        input.boost = isPressed;
-        break;
-      case SDL_SCANCODE_LEFT:
-        input.left = isPressed;
-        break;
-      case SDL_SCANCODE_RIGHT:
-        input.right = isPressed;
-        break;
-      case SDL_SCANCODE_UP:
-        input.up = isPressed;
-        break;
-      case SDL_SCANCODE_DOWN:
-        input.down = isPressed;
-        break;
-      }
-    }
-    else if(event.type == SDL_JOYAXISMOTION)
-    {
-      if(event.jaxis.axis == 0) // horizontal
-      {
-        input.left = event.jaxis.value < 0;
-        input.right = event.jaxis.value > 0;
-      }
-      else if(event.jaxis.axis == 1) // vertical
-      {
-        input.up = event.jaxis.value < 0;
-        input.down = event.jaxis.value > 0;
-      }
-    }
-    else if(event.type == SDL_JOYBUTTONDOWN)
-    {
-      input.restart = true;
-    }
-    else if(event.type == SDL_JOYBUTTONUP)
-    {
-      input.restart = false;
-    }
-    else
-    {
-      printf("Unknown event: %d\n", event.type);
-    }
-  }
+    processEvent(event, input);
 }
 
 enum class Direction
@@ -114,27 +141,26 @@ struct Bike
   Direction direction;
 };
 
-Bike g_bike;
+Bike g_bikes[2];
 char g_board[HEIGHT][WIDTH];
 
 void initGame()
 {
-  g_bike = {};
-  g_bike.x = WIDTH/2;
-  g_bike.y = HEIGHT/2;
+  int k = 0;
+  for(auto& bike : g_bikes)
+  {
+    bike = {};
+    bike.x = (k+1) * WIDTH/(MAX_PLAYERS+1);
+    bike.y = HEIGHT/2;
+
+    ++k;
+  }
   memset(g_board, 0, sizeof g_board);
 }
 
-void updateGame(Input input)
+void updateBike(Bike& bike, PlayerInput input, int team)
 {
-  if(!g_bike.alive)
-  {
-    if(input.restart)
-      initGame();
-    return;
-  }
-
-  Direction wantedDirection = g_bike.direction;
+  Direction wantedDirection = bike.direction;
 
   if(input.left)
     wantedDirection = Direction::Left;
@@ -145,46 +171,75 @@ void updateGame(Input input)
   if(input.down)
     wantedDirection = Direction::Down;
 
-  if(!isOpposed(g_bike.direction, wantedDirection))
-    g_bike.direction = wantedDirection;
+  if(!isOpposed(bike.direction, wantedDirection))
+    bike.direction = wantedDirection;
 
   int speed = 1;
 
   if(input.boost)
     speed = 2;
 
-  int dx = dirs[(int)g_bike.direction][0];
-  int dy = dirs[(int)g_bike.direction][1];
+  int dx = dirs[(int)bike.direction][0];
+  int dy = dirs[(int)bike.direction][1];
 
-  g_bike.x += dx * speed;
-  g_bike.y += dy * speed;
+  bike.x += dx * speed;
+  bike.y += dy * speed;
 
-  g_bike.x = (g_bike.x + WIDTH)%WIDTH;
-  g_bike.y = (g_bike.y + HEIGHT)%HEIGHT;
+  bike.x = (bike.x + WIDTH)%WIDTH;
+  bike.y = (bike.y + HEIGHT)%HEIGHT;
 
   if(dx || dy)
-    if(g_board[g_bike.y][g_bike.x])
-      g_bike.alive = false;
+    if(g_board[bike.y][bike.x])
+      bike.alive = false;
 
-  g_board[g_bike.y][g_bike.x] = 1;
+  g_board[bike.y][bike.x] = 1 + team;
+}
+
+bool isGameOver()
+{
+  for(auto& bike : g_bikes)
+    if(!bike.alive)
+      return true;
+  return false;
+}
+
+void updateGame(Input input)
+{
+  if(isGameOver())
+  {
+    if(input.restart)
+      initGame();
+    return;
+  }
+
+  for(int i=0;i < MAX_PLAYERS;++i)
+    updateBike(g_bikes[i], input.players[i], i);
 }
 
 void drawScreen(SDL_Renderer* renderer)
 {
-  /* Select the color for drawing. It is set to red here. */
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+  SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255);
 
   /* Clear the entire screen to our selected color. */
   SDL_RenderClear(renderer);
+
+  int colors[][3] =
+  {
+    { 255, 255, 0 },
+    { 0, 0, 255 },
+    { 255, 0, 0 },
+    { 0, 255, 0 },
+  };
 
   for(int row=0;row < HEIGHT;++row)
   {
     for(int col=0;col < WIDTH;++col)
     {
-      int c = g_board[row][col] ? 255 : 0;
+      int c = g_board[row][col];
       if(c)
       {
-        SDL_SetRenderDrawColor(renderer, c, c, c, 255);
+        int idx = (c - 1) % 4;
+        SDL_SetRenderDrawColor(renderer, colors[idx][0], colors[idx][1], colors[idx][2], 255);
         SDL_RenderDrawPoint(renderer, col, row);
       }
     }
@@ -208,19 +263,24 @@ int main()
 
   printf("Detected %d joysticks\n", SDL_NumJoysticks());
 
-  auto joy = SDL_JoystickOpen(0);
+  SDL_Joystick* joys[MAX_PLAYERS];
 
-  if(joy)
+  for(int i=0;i < MAX_PLAYERS; ++i)
   {
-    printf("Opened Joystick 0\n");
-    printf("Name: %s\n", SDL_JoystickNameForIndex(0));
-    printf("Number of Axes: %d\n", SDL_JoystickNumAxes(joy));
-    printf("Number of Buttons: %d\n", SDL_JoystickNumButtons(joy));
-    printf("Number of Balls: %d\n", SDL_JoystickNumBalls(joy));
-  }
-  else
-  {
-    printf("Couldn't open Joystick 0\n");
+    joys[i] = SDL_JoystickOpen(i);
+
+    if(joys[i])
+    {
+      printf("Opened Joystick %d\n", i);
+      printf("Name: %s\n", SDL_JoystickNameForIndex(i));
+      printf("Number of Axes: %d\n", SDL_JoystickNumAxes(joys[i]));
+      printf("Number of Buttons: %d\n", SDL_JoystickNumButtons(joys[i]));
+      printf("Number of Balls: %d\n", SDL_JoystickNumBalls(joys[i]));
+    }
+    else
+    {
+      printf("Couldn't open Joystick %d\n", i);
+    }
   }
 
   initGame();
@@ -237,7 +297,9 @@ int main()
     drawScreen(renderer);
   }
 
-  SDL_JoystickClose(joy);
+  for(int i=0;i < MAX_PLAYERS;++i)
+    SDL_JoystickClose(joys[i]);
+
   SDL_DestroyWindow(window);
 
   SDL_Quit();
