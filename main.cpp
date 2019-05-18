@@ -233,7 +233,7 @@ void drawScreen(SDL_Renderer* renderer)
   /* Clear the entire screen to our selected color. */
   SDL_RenderClear(renderer);
 
-  int colors[][3] =
+  static const int colors[][3] =
   {
     { 255, 255, 0 },
     { 0, 0, 255 },
@@ -256,8 +256,6 @@ void drawScreen(SDL_Renderer* renderer)
     }
   }
 
-  /* Up until now everything was drawn behind the scenes.
-     This will show the new, red contents of the window. */
   SDL_RenderPresent(renderer);
 }
 
@@ -268,7 +266,6 @@ int main()
   auto window = SDL_CreateWindow("Literace", 0, 0, WIDTH, HEIGHT, 0);
   assert(window);
 
-  /* We must call SDL_CreateRenderer in order for draw calls to affect this window. */
   auto renderer = SDL_CreateRenderer(window, -1, 0);
   assert(renderer);
 
