@@ -62,13 +62,13 @@ void processEvent(SDL_Event const& event, Input& input)
 
     if(info.axis == 0) // horizontal
     {
-      input.players[info.which].left = info.value < 0;
-      input.players[info.which].right = info.value > 0;
+      input.players[info.which].left = info.value < -16384;
+      input.players[info.which].right = info.value > 16384;
     }
     else if(info.axis == 1) // vertical
     {
-      input.players[info.which].up = info.value < 0;
-      input.players[info.which].down = info.value > 0;
+      input.players[info.which].up = info.value < -16384;
+      input.players[info.which].down = info.value > 16384;
     }
   }
   else if(event.type == SDL_JOYHATMOTION)
@@ -82,16 +82,17 @@ void processEvent(SDL_Event const& event, Input& input)
     input.players[info.which].up    = info.value == SDL_HAT_UP;
     input.players[info.which].down  = info.value == SDL_HAT_DOWN;
   }
-  else if(event.type == SDL_JOYBUTTONDOWN)
+  else if(event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
   {
+    bool isPressed = event.type == SDL_JOYBUTTONDOWN;
+
     auto& info = event.jbutton;
 
     printf("[%d] %d\n", info.which, info.button);
-    input.restart = true;
-  }
-  else if(event.type == SDL_JOYBUTTONUP)
-  {
-    input.restart = false;
+    if(info.button == 0)
+      input.players[info.which].boost = isPressed;
+    else
+      input.restart = isPressed;
   }
   else
   {
