@@ -1,8 +1,7 @@
 #include <cstring> // memset
 #include "game.h"
 
-Bike g_bikes[2];
-char g_board[HEIGHT][WIDTH];
+Game g_game;
 
 namespace
 {
@@ -59,15 +58,15 @@ void updateBike(Bike& bike, PlayerInput input, int team)
   bike.y = (bike.y + HEIGHT) % HEIGHT;
 
   if(dx || dy)
-    if(g_board[bike.y][bike.x])
+    if(g_game.board[bike.y][bike.x])
       bike.alive = false;
 
-  g_board[bike.y][bike.x] = 1 + team;
+  g_game.board[bike.y][bike.x] = 1 + team;
 }
 
 bool isGameOver()
 {
-  for(auto& bike : g_bikes)
+  for(auto& bike : g_game.bikes)
     if(!bike.alive)
       return true;
 
@@ -79,7 +78,7 @@ void initGame()
 {
   int k = 0;
 
-  for(auto& bike : g_bikes)
+  for(auto& bike : g_game.bikes)
   {
     bike = {};
     bike.x = (k + 1) * WIDTH / (MAX_PLAYERS + 1);
@@ -88,7 +87,7 @@ void initGame()
     ++k;
   }
 
-  memset(g_board, 0, sizeof g_board);
+  memset(g_game.board, 0, sizeof g_game.board);
 }
 
 void updateGame(Input input)
@@ -102,6 +101,6 @@ void updateGame(Input input)
   }
 
   for(int i = 0; i < MAX_PLAYERS; ++i)
-    updateBike(g_bikes[i], input.players[i], i);
+    updateBike(g_game.bikes[i], input.players[i], i);
 }
 

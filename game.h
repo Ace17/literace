@@ -35,6 +35,11 @@ struct Bike
 void initGame();
 void updateGame(Input input);
 
-extern Bike g_bikes[2];
-extern char g_board[HEIGHT][WIDTH];
+struct Game
+{
+  Bike bikes[2];
+  char board[HEIGHT][WIDTH];
+};
+
+extern Game g_game;
 
