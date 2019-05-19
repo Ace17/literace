@@ -93,19 +93,30 @@ void processInput(Input& input)
     processEvent(event, input);
 }
 
-void drawScreen(SDL_Renderer* renderer)
+Uint32 pixels[WIDTH*HEIGHT];
+
+Uint32 mkColor(int r, int g, int b)
 {
-  SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255);
+  Uint32 color = 0;
+  color |= 0xff;
+  color <<= 8;
+  color |= r;
+  color <<= 8;
+  color |= g;
+  color <<= 8;
+  color |= b;
+  return color;
+}
 
-  /* Clear the entire screen to our selected color. */
-  SDL_RenderClear(renderer);
-
-  static const int colors[][3] =
+void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
+{
+  static const Uint32 colors[] =
   {
-    { 255, 255, 0 },
-    { 0, 0, 255 },
-    { 255, 0, 0 },
-    { 0, 255, 0 },
+    mkColor( 40, 40, 40 ),
+    mkColor( 255, 255, 0 ),
+    mkColor( 0, 0, 255 ),
+    mkColor( 255, 0, 0 ),
+    mkColor( 0, 255, 0 ),
   };
 
   for(int row = 0; row < HEIGHT; ++row)
@@ -113,16 +124,12 @@ void drawScreen(SDL_Renderer* renderer)
     for(int col = 0; col < WIDTH; ++col)
     {
       int c = g_board[row][col];
-
-      if(c)
-      {
-        int idx = (c - 1) % 4;
-        SDL_SetRenderDrawColor(renderer, colors[idx][0], colors[idx][1], colors[idx][2], 255);
-        SDL_RenderDrawPoint(renderer, col, row);
-      }
+      pixels[row * WIDTH + col] = colors[c%5];
     }
   }
 
+  SDL_UpdateTexture(texture, NULL, pixels, WIDTH * sizeof(Uint32));
+  SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
 }
 
@@ -135,6 +142,9 @@ int main()
 
   auto renderer = SDL_CreateRenderer(window, -1, 0);
   assert(renderer);
+
+  auto texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, WIDTH, HEIGHT);
+  assert(texture);
 
   printf("Detected %d joysticks\n", SDL_NumJoysticks());
 
@@ -170,7 +180,7 @@ int main()
       break;
 
     updateGame(input);
-    drawScreen(renderer);
+    drawScreen(renderer, texture);
   }
 
   for(int i = 0; i < MAX_PLAYERS; ++i)
