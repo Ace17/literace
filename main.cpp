@@ -93,7 +93,7 @@ void processInput(Input& input)
     processEvent(event, input);
 }
 
-Uint32 pixels[WIDTH*HEIGHT];
+Uint32 pixels[WIDTH * HEIGHT];
 
 Uint32 mkColor(int r, int g, int b)
 {
@@ -112,11 +112,11 @@ void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
 {
   static const Uint32 colors[] =
   {
-    mkColor( 40, 40, 40 ),
-    mkColor( 255, 255, 0 ),
-    mkColor( 0, 0, 255 ),
-    mkColor( 255, 0, 0 ),
-    mkColor( 0, 255, 0 ),
+    mkColor(40, 40, 40),
+    mkColor(255, 255, 0),
+    mkColor(0, 0, 255),
+    mkColor(255, 0, 0),
+    mkColor(0, 255, 0),
   };
 
   for(int row = 0; row < HEIGHT; ++row)
@@ -124,7 +124,7 @@ void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
     for(int col = 0; col < WIDTH; ++col)
     {
       int c = g_game.board[row][col];
-      pixels[row * WIDTH + col] = colors[c%5];
+      pixels[row * WIDTH + col] = colors[c % 5];
     }
   }
 
