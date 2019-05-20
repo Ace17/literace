@@ -17,10 +17,11 @@ void processEvent(SDL_Event const& event, Input& input)
     switch(event.key.keysym.scancode)
     {
     case SDL_SCANCODE_ESCAPE:
-      {
-        input.quit = true;
-        return;
-      }
+      input.quit = true;
+      return;
+    case SDL_SCANCODE_SPACE:
+      input.restart = isPressed;
+      break;
     case SDL_SCANCODE_LSHIFT:
       input.players[0].boost = isPressed;
       break;

@@ -37,7 +37,7 @@ void updateGame(Input input);
 
 struct Game
 {
-  Bike bikes[2];
+  Bike bikes[MAX_PLAYERS];
   char board[WIDTH * HEIGHT];
 };
 
