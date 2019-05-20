@@ -1,4 +1,3 @@
-#include <cstring> // memset
 #include "game.h"
 
 Game g_game;
@@ -58,10 +57,10 @@ void updateBike(Bike& bike, PlayerInput input, int team)
   bike.y = (bike.y + HEIGHT) % HEIGHT;
 
   if(dx || dy)
-    if(g_game.board[bike.y][bike.x])
+    if(g_game.board[bike.y * WIDTH + bike.x])
       bike.alive = false;
 
-  g_game.board[bike.y][bike.x] = 1 + team;
+  g_game.board[bike.y * WIDTH + bike.x] = 1 + team;
 }
 
 bool isGameOver()
@@ -87,7 +86,8 @@ void initGame()
     ++k;
   }
 
-  memset(g_game.board, 0, sizeof g_game.board);
+  for(auto& cell : g_game.board)
+    cell = 0;
 }
 
 void updateGame(Input input)

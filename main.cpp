@@ -123,7 +123,7 @@ void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
   {
     for(int col = 0; col < WIDTH; ++col)
     {
-      int c = g_game.board[row][col];
+      int c = g_game.board[row * WIDTH + col];
       pixels[row * WIDTH + col] = colors[c % 5];
     }
   }

@@ -38,7 +38,7 @@ void updateGame(Input input);
 struct Game
 {
   Bike bikes[2];
-  char board[HEIGHT][WIDTH];
+  char board[WIDTH * HEIGHT];
 };
 
 extern Game g_game;
