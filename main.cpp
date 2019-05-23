@@ -1,7 +1,80 @@
 #include <cstdio>
 #include <cassert>
+#include <vector>
 #include "SDL.h"
 #include "game.h"
+
+struct HumanWithAJoystick
+{
+  SDL_Joystick* joy;
+  SDL_JoystickID id;
+  int which;
+  int bikeId;
+};
+
+std::vector<HumanWithAJoystick> g_humans;
+
+template<typename T, typename Lambda>
+int indexOf(std::vector<T> const& array, Lambda predicate)
+{
+  for(int i = 0; i < (int)array.size(); ++i)
+    if(predicate(array[i]))
+      return i;
+
+  return -1;
+}
+
+void addHuman(int whichJoystick)
+{
+  HumanWithAJoystick human {};
+
+  auto hasOurId = [&] (HumanWithAJoystick const& existingHuman)
+    {
+      return existingHuman.bikeId == human.bikeId;
+    };
+
+  // find a free bikeId
+  while(indexOf(g_humans, hasOurId) != -1)
+    human.bikeId++;
+
+  if(human.bikeId >= MAX_PLAYERS)
+  {
+    printf("Too many players\n");
+    return;
+  }
+
+  human.joy = SDL_JoystickOpen(whichJoystick);
+  human.id = SDL_JoystickGetDeviceInstanceID(whichJoystick);
+  human.which = whichJoystick;
+
+  if(!human.joy)
+  {
+    printf("Couldn't open Joystick %d\n", whichJoystick);
+    return;
+  }
+
+  g_humans.push_back(human);
+
+  printf("Player #%d enters! (joystick: %d)\n", human.bikeId, whichJoystick);
+}
+
+void removeHuman(SDL_JoystickID joyId)
+{
+  auto isItTheOneToRemove = [&] (HumanWithAJoystick const& human)
+    {
+      return human.id == joyId;
+    };
+
+  auto idx = indexOf(g_humans, isItTheOneToRemove);
+
+  if(idx == -1)
+    return; // this joystick wasn't assigned to a bike
+
+  SDL_JoystickClose(g_humans[idx].joy);
+  printf("Player %d has left (had joystick: %d).\n", g_humans[idx].bikeId, g_humans[idx].which);
+  std::swap(g_humans[idx], g_humans.back());
+  g_humans.pop_back();
+}
 
 void processEvent(SDL_Event const& event, Input& input)
 {
@@ -12,14 +85,9 @@ void processEvent(SDL_Event const& event, Input& input)
   }
 
   if(event.type == SDL_JOYDEVICEADDED)
-  {
-    printf("Joystick added: %d\n", event.jdevice.which);
-  }
-
-  if(event.type == SDL_JOYDEVICEREMOVED)
-  {
-    printf("Joystick removed\n");
-  }
+    addHuman(event.jdevice.which);
+  else if(event.type == SDL_JOYDEVICEREMOVED)
+    removeHuman(event.jdevice.which);
 
   if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
   {
@@ -52,41 +120,44 @@ void processEvent(SDL_Event const& event, Input& input)
   else if(event.type == SDL_JOYAXISMOTION)
   {
     auto& info = event.jaxis;
+    auto& player = input.players[info.which];
 
     printf("[%d] axis index: %d\n", info.which, info.axis);
 
     if(info.axis == 0) // horizontal
     {
-      input.players[info.which].left = info.value < -16384;
-      input.players[info.which].right = info.value > 16384;
+      player.left = info.value < -16384;
+      player.right = info.value > 16384;
     }
     else if(info.axis == 1) // vertical
     {
-      input.players[info.which].up = info.value < -16384;
-      input.players[info.which].down = info.value > 16384;
+      player.up = info.value < -16384;
+      player.down = info.value > 16384;
     }
   }
   else if(event.type == SDL_JOYHATMOTION)
   {
     auto& info = event.jhat;
+    auto& player = input.players[info.which];
 
     printf("[%d] hat index: %d\n", info.which, info.hat);
 
-    input.players[info.which].left = info.value == SDL_HAT_LEFT;
-    input.players[info.which].right = info.value == SDL_HAT_RIGHT;
-    input.players[info.which].up = info.value == SDL_HAT_UP;
-    input.players[info.which].down = info.value == SDL_HAT_DOWN;
+    player.left = info.value == SDL_HAT_LEFT;
+    player.right = info.value == SDL_HAT_RIGHT;
+    player.up = info.value == SDL_HAT_UP;
+    player.down = info.value == SDL_HAT_DOWN;
   }
   else if(event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
   {
     bool isPressed = event.type == SDL_JOYBUTTONDOWN;
 
     auto& info = event.jbutton;
+    auto& player = input.players[info.which];
 
     printf("[%d] %d\n", info.which, info.button);
 
     if(info.button == 0)
-      input.players[info.which].boost = isPressed;
+      player.boost = isPressed;
     else
       input.restart = isPressed;
   }
@@ -157,28 +228,6 @@ int main()
   auto texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, WIDTH, HEIGHT);
   assert(texture);
 
-  printf("Detected %d joysticks\n", SDL_NumJoysticks());
-
-  SDL_Joystick* joys[MAX_PLAYERS];
-
-  for(int i = 0; i < MAX_PLAYERS; ++i)
-  {
-    joys[i] = SDL_JoystickOpen(i);
-
-    if(joys[i])
-    {
-      printf("Opened Joystick %d\n", i);
-      printf("Name: %s\n", SDL_JoystickNameForIndex(i));
-      printf("Number of Axes: %d\n", SDL_JoystickNumAxes(joys[i]));
-      printf("Number of Buttons: %d\n", SDL_JoystickNumButtons(joys[i]));
-      printf("Number of Balls: %d\n", SDL_JoystickNumBalls(joys[i]));
-    }
-    else
-    {
-      printf("Couldn't open Joystick %d\n", i);
-    }
-  }
-
   initGame();
 
   Input input {};
@@ -194,8 +243,8 @@ int main()
     drawScreen(renderer, texture);
   }
 
-  for(int i = 0; i < MAX_PLAYERS; ++i)
-    SDL_JoystickClose(joys[i]);
+  while(!g_humans.empty())
+    removeHuman(g_humans.back().id);
 
   SDL_DestroyWindow(window);
 
