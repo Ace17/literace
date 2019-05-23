@@ -11,6 +11,16 @@ void processEvent(SDL_Event const& event, Input& input)
     return;
   }
 
+  if(event.type == SDL_JOYDEVICEADDED)
+  {
+    printf("Joystick added: %d\n", event.jdevice.which);
+  }
+
+  if(event.type == SDL_JOYDEVICEREMOVED)
+  {
+    printf("Joystick removed\n");
+  }
+
   if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
   {
     bool isPressed = event.type == SDL_KEYDOWN;
