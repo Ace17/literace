@@ -179,7 +179,7 @@ void processInput(Input& input)
     processEvent(event, input);
 }
 
-Uint32 pixels[WIDTH * HEIGHT];
+Uint32 pixels[BOARD_WIDTH * BOARD_HEIGHT];
 
 Uint32 mkColor(int r, int g, int b)
 {
@@ -205,16 +205,16 @@ void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
     mkColor(0, 255, 0),
   };
 
-  for(int row = 0; row < HEIGHT; ++row)
+  for(int row = 0; row < BOARD_HEIGHT; ++row)
   {
-    for(int col = 0; col < WIDTH; ++col)
+    for(int col = 0; col < BOARD_WIDTH; ++col)
     {
-      int c = g_game.board[row * WIDTH + col];
-      pixels[row * WIDTH + col] = colors[c % 5];
+      int c = g_game.board[row * BOARD_WIDTH + col];
+      pixels[row * BOARD_WIDTH + col] = colors[c % 5];
     }
   }
 
-  SDL_UpdateTexture(texture, NULL, pixels, WIDTH * sizeof(Uint32));
+  SDL_UpdateTexture(texture, NULL, pixels, BOARD_WIDTH * sizeof(Uint32));
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
 }
@@ -223,13 +223,13 @@ int main()
 {
   SDL_Init(SDL_INIT_EVERYTHING);
 
-  auto window = SDL_CreateWindow("Literace", 0, 0, WIDTH, HEIGHT, 0);
+  auto window = SDL_CreateWindow("Literace", 0, 0, BOARD_WIDTH, BOARD_HEIGHT, 0);
   assert(window);
 
   auto renderer = SDL_CreateRenderer(window, -1, 0);
   assert(renderer);
 
-  auto texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, WIDTH, HEIGHT);
+  auto texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, BOARD_WIDTH, BOARD_HEIGHT);
   assert(texture);
 
   initGame(g_game);

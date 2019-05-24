@@ -1,8 +1,8 @@
 #pragma once
 
 static auto const MAX_PLAYERS = 2;
-static auto const WIDTH = 1024;
-static auto const HEIGHT = 768;
+static auto const BOARD_WIDTH = 1024;
+static auto const BOARD_HEIGHT = 768;
 
 enum class Direction
 {
@@ -35,7 +35,7 @@ struct Bike
 struct Game
 {
   Bike bikes[MAX_PLAYERS];
-  char board[WIDTH * HEIGHT];
+  char board[BOARD_WIDTH * BOARD_HEIGHT];
 };
 
 void initGame(Game& game);

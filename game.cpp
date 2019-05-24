@@ -53,14 +53,14 @@ void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
   bike.x += dx * speed;
   bike.y += dy * speed;
 
-  bike.x = (bike.x + WIDTH) % WIDTH;
-  bike.y = (bike.y + HEIGHT) % HEIGHT;
+  bike.x = (bike.x + BOARD_WIDTH) % BOARD_WIDTH;
+  bike.y = (bike.y + BOARD_HEIGHT) % BOARD_HEIGHT;
 
   if(dx || dy)
-    if(game.board[bike.y * WIDTH + bike.x])
+    if(game.board[bike.y * BOARD_WIDTH + bike.x])
       bike.alive = false;
 
-  game.board[bike.y * WIDTH + bike.x] = 1 + team;
+  game.board[bike.y * BOARD_WIDTH + bike.x] = 1 + team;
 }
 
 bool isGameOver(Game& game)
@@ -80,8 +80,8 @@ void initGame(Game& game)
   for(auto& bike : game.bikes)
   {
     bike = {};
-    bike.x = (k + 1) * WIDTH / (MAX_PLAYERS + 1);
-    bike.y = HEIGHT / 2;
+    bike.x = (k + 1) * BOARD_WIDTH / (MAX_PLAYERS + 1);
+    bike.y = BOARD_HEIGHT / 2;
 
     ++k;
   }
