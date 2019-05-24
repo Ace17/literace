@@ -179,8 +179,6 @@ void processInput(Input& input)
     processEvent(event, input);
 }
 
-Uint32 pixels[BOARD_WIDTH * BOARD_HEIGHT];
-
 Uint32 mkColor(int r, int g, int b)
 {
   Uint32 color = 0;
@@ -204,6 +202,8 @@ void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
     mkColor(255, 0, 0),
     mkColor(0, 255, 0),
   };
+
+  static Uint32 pixels[BOARD_WIDTH * BOARD_HEIGHT];
 
   for(int row = 0; row < BOARD_HEIGHT; ++row)
   {
