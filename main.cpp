@@ -1,8 +1,12 @@
+// "Terminal" side.
+// Depends on game logic.
 #include <cstdio>
 #include <cassert>
 #include <vector>
 #include "SDL.h"
 #include "game.h"
+
+Game g_game;
 
 struct HumanWithAJoystick
 {
@@ -228,7 +232,7 @@ int main()
   auto texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, WIDTH, HEIGHT);
   assert(texture);
 
-  initGame();
+  initGame(g_game);
 
   Input input {};
 
@@ -239,7 +243,7 @@ int main()
     if(input.quit)
       break;
 
-    updateGame(input);
+    updateGame(g_game, input);
     drawScreen(renderer, texture);
   }
 

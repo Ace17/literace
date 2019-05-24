@@ -1,6 +1,6 @@
+// Game logic.
+// No SDL or I/O should appear here.
 #include "game.h"
-
-Game g_game;
 
 namespace
 {
@@ -23,7 +23,7 @@ bool isOpposed(Direction a, Direction b)
   return a_dx == -b_dx && a_dy == -b_dy;
 }
 
-void updateBike(Bike& bike, PlayerInput input, int team)
+void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
 {
   Direction wantedDirection = bike.direction;
 
@@ -57,15 +57,15 @@ void updateBike(Bike& bike, PlayerInput input, int team)
   bike.y = (bike.y + HEIGHT) % HEIGHT;
 
   if(dx || dy)
-    if(g_game.board[bike.y * WIDTH + bike.x])
+    if(game.board[bike.y * WIDTH + bike.x])
       bike.alive = false;
 
-  g_game.board[bike.y * WIDTH + bike.x] = 1 + team;
+  game.board[bike.y * WIDTH + bike.x] = 1 + team;
 }
 
-bool isGameOver()
+bool isGameOver(Game& game)
 {
-  for(auto& bike : g_game.bikes)
+  for(auto& bike : game.bikes)
     if(!bike.alive)
       return true;
 
@@ -73,11 +73,11 @@ bool isGameOver()
 }
 }
 
-void initGame()
+void initGame(Game& game)
 {
   int k = 0;
 
-  for(auto& bike : g_game.bikes)
+  for(auto& bike : game.bikes)
   {
     bike = {};
     bike.x = (k + 1) * WIDTH / (MAX_PLAYERS + 1);
@@ -86,21 +86,21 @@ void initGame()
     ++k;
   }
 
-  for(auto& cell : g_game.board)
+  for(auto& cell : game.board)
     cell = 0;
 }
 
-void updateGame(Input input)
+void updateGame(Game& game, Input input)
 {
-  if(isGameOver())
+  if(isGameOver(game))
   {
     if(input.restart)
-      initGame();
+      initGame(game);
 
     return;
   }
 
   for(int i = 0; i < MAX_PLAYERS; ++i)
-    updateBike(g_game.bikes[i], input.players[i], i);
+    updateBike(game, game.bikes[i], input.players[i], i);
 }
 

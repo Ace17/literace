@@ -32,14 +32,12 @@ struct Bike
   Direction direction;
 };
 
-void initGame();
-void updateGame(Input input);
-
 struct Game
 {
   Bike bikes[MAX_PLAYERS];
   char board[WIDTH * HEIGHT];
 };
 
-extern Game g_game;
+void initGame(Game& game);
+void updateGame(Game& game, Input input);
 
