@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -ex
-g++ -O3 game.cpp main.cpp `pkg-config sdl2 --cflags --libs`
-./a.out
+make -j`nproc`
+./bin/literace.exe
