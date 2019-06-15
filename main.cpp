@@ -165,6 +165,14 @@ void processEvent(SDL_Event const& event, Input& input)
     else
       input.restart = isPressed;
   }
+  else if(event.type == SDL_WINDOWEVENT)
+  {
+    // ignore
+  }
+  else if(event.type == SDL_AUDIODEVICEADDED)
+  {
+    // ignore
+  }
   else
   {
     printf("Unknown event: %d\n", event.type);
