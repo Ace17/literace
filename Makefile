@@ -18,6 +18,9 @@ $(BIN)/literace.exe: $(SRCS:%=$(BIN)/%.o)
 $(BIN)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) -c $(CXXFLAGS) -o "$@" $<
+	@$(CXX) -MM -MT "$@" -MP -c $(CXXFLAGS) -o "$@.dep" $<
 
 clean:
 	rm -rf $(BIN)
+
+include $(shell test -d $(BIN) && find $(BIN) -name "*.dep")
