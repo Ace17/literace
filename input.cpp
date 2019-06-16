@@ -6,6 +6,8 @@
 
 namespace
 {
+const int DEBUG_JOYSTICK = 0;
+
 struct HumanWithAJoystick
 {
   SDL_Joystick* joy;
@@ -123,7 +125,8 @@ void processEvent(SDL_Event const& event, GameInput& input)
     auto& info = event.jaxis;
     auto& player = input.players[info.which];
 
-    printf("[%d] axis index: %d\n", info.which, info.axis);
+    if(DEBUG_JOYSTICK)
+      printf("[%d] axis index: %d\n", info.which, info.axis);
 
     if(info.axis == 0) // horizontal
     {
@@ -141,7 +144,8 @@ void processEvent(SDL_Event const& event, GameInput& input)
     auto& info = event.jhat;
     auto& player = input.players[info.which];
 
-    printf("[%d] hat index: %d\n", info.which, info.hat);
+    if(DEBUG_JOYSTICK)
+      printf("[%d] hat index: %d\n", info.which, info.hat);
 
     player.left = info.value == SDL_HAT_LEFT;
     player.right = info.value == SDL_HAT_RIGHT;
@@ -155,7 +159,8 @@ void processEvent(SDL_Event const& event, GameInput& input)
     auto& info = event.jbutton;
     auto& player = input.players[info.which];
 
-    printf("[%d] %d\n", info.which, info.button);
+    if(DEBUG_JOYSTICK)
+      printf("[%d] %d\n", info.which, info.button);
 
     if(info.button == 0)
       player.boost = isPressed;
