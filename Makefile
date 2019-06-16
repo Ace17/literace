@@ -4,6 +4,7 @@ CXXFLAGS+=-O3
 
 SRCS:=\
 	game.cpp \
+	input.cpp \
 	main.cpp \
 
 PKGS+=sdl2
