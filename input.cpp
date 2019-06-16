@@ -4,6 +4,8 @@
 #include "SDL.h"
 #include "input.h"
 
+namespace
+{
 struct HumanWithAJoystick
 {
   SDL_Joystick* joy;
@@ -172,6 +174,7 @@ void processEvent(SDL_Event const& event, GameInput& input)
   {
     printf("Unknown event: %d\n", event.type);
   }
+}
 }
 
 GameInput processInput()
