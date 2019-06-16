@@ -8,8 +8,7 @@ struct HumanWithAJoystick
 {
   SDL_Joystick* joy;
   SDL_JoystickID id;
-  int which;
-  int bikeId;
+  int bikeId; // associated bike in the game
 };
 
 static std::vector<HumanWithAJoystick> g_humans;
@@ -45,7 +44,6 @@ void addHuman(int whichJoystick)
 
   human.joy = SDL_JoystickOpen(whichJoystick);
   human.id = SDL_JoystickGetDeviceInstanceID(whichJoystick);
-  human.which = whichJoystick;
 
   if(!human.joy)
   {
@@ -55,7 +53,7 @@ void addHuman(int whichJoystick)
 
   g_humans.push_back(human);
 
-  printf("Player #%d enters! (joystick: %d)\n", human.bikeId, whichJoystick);
+  printf("Player #%d enters! (joystick: %d)\n", human.bikeId, human.id);
 }
 
 void removeHuman(SDL_JoystickID joyId)
@@ -71,7 +69,7 @@ void removeHuman(SDL_JoystickID joyId)
     return; // this joystick wasn't assigned to a bike
 
   SDL_JoystickClose(g_humans[idx].joy);
-  printf("Player %d has left (had joystick: %d).\n", g_humans[idx].bikeId, g_humans[idx].which);
+  printf("Player %d has left (had joystick: %d).\n", g_humans[idx].bikeId, g_humans[idx].id);
   std::swap(g_humans[idx], g_humans.back());
   g_humans.pop_back();
 }
