@@ -19,7 +19,7 @@ struct PlayerInput
   bool boost;
 };
 
-struct Input
+struct GameInput
 {
   bool quit, restart;
   PlayerInput players[MAX_PLAYERS];
@@ -39,5 +39,5 @@ struct Game
 };
 
 void initGame(Game& game);
-void updateGame(Game& game, Input input);
+void updateGame(Game& game, GameInput input);
 

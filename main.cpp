@@ -80,7 +80,7 @@ void removeHuman(SDL_JoystickID joyId)
   g_humans.pop_back();
 }
 
-void processEvent(SDL_Event const& event, Input& input)
+void processEvent(SDL_Event const& event, GameInput& input)
 {
   if(event.type == SDL_QUIT)
   {
@@ -179,7 +179,7 @@ void processEvent(SDL_Event const& event, Input& input)
   }
 }
 
-void processInput(Input& input)
+void processInput(GameInput& input)
 {
   SDL_Event event;
 
@@ -242,7 +242,7 @@ int main()
 
   initGame(g_game);
 
-  Input input {};
+  GameInput input {};
 
   while(1)
   {

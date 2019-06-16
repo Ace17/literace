@@ -90,7 +90,7 @@ void initGame(Game& game)
     cell = 0;
 }
 
-void updateGame(Game& game, Input input)
+void updateGame(Game& game, GameInput input)
 {
   if(isGameOver(game))
   {
