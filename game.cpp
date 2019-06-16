@@ -42,7 +42,12 @@ void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
     wantedDirection = Direction::Down;
 
   if(!isOpposed(bike.direction, wantedDirection))
+  {
+    if(bike.direction != wantedDirection)
+      game.sink->onTurn(game.frameCount, team);
+
     bike.direction = wantedDirection;
+  }
 
   int speed = 1;
 
@@ -61,7 +66,7 @@ void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
   if(dx || dy)
     if(game.board[bike.y * BOARD_WIDTH + bike.x])
     {
-      game.sink->onKilled(team, game.board[bike.y * BOARD_WIDTH + bike.x]);
+      game.sink->onKilled(game.frameCount, team, game.board[bike.y * BOARD_WIDTH + bike.x]);
       bike.alive = false;
     }
 
@@ -93,6 +98,8 @@ void initGame(Game& game)
 
   for(auto& cell : game.board)
     cell = 0;
+
+  game.frameCount = 0;
 }
 
 void updateGame(Game& game, GameInput input)
@@ -107,6 +114,8 @@ void updateGame(Game& game, GameInput input)
 
   for(int i = 0; i < MAX_PLAYERS; ++i)
     updateBike(game, game.bikes[i], input.players[i], 1 + i);
+
+  game.frameCount++;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

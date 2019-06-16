@@ -22,9 +22,17 @@ void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
 
 struct Match : IEventSink
 {
-  void onKilled(int victim, int killer) override
+  void onKilled(int frameCount, int victim, int killer) override
   {
-    printf("Bike %d was killed by %d\n", victim, killer);
+    if(victim == killer)
+      printf("Bike %d committed suicide (lifetime=%d)\n", victim, frameCount);
+    else
+      printf("Bike %d was killed by %d (lifetime=%d)\n", victim, killer, frameCount);
+  }
+
+  void onTurn(int frameCount, int bike)
+  {
+    printf("bike %d turned\n", bike);
   }
 };
 
