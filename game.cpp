@@ -111,18 +111,33 @@ void updateGame(Game& game, GameInput input)
 
 namespace
 {
-  int mkColor(int r, int g, int b)
-  {
-    int color = 0;
-    color |= 0xff;
-    color <<= 8;
-    color |= r;
-    color <<= 8;
-    color |= g;
-    color <<= 8;
-    color |= b;
-    return color;
-  }
+int mkColor(int r, int g, int b)
+{
+  int color = 0;
+  color |= 0xff;
+  color <<= 8;
+  color |= r;
+  color <<= 8;
+  color |= g;
+  color <<= 8;
+  color |= b;
+  return color;
+}
+
+int darken(int color)
+{
+  int r = (color >> 16) & 0xff;
+  int g = (color >> 8) & 0xff;
+  int b = (color >> 0) & 0xff;
+  return mkColor(r / 2, g / 2, b / 2);
+}
+
+void putPixel(int* pixels, int x, int y, int color)
+{
+  if(x < 0 || y < 0 || x >= BOARD_WIDTH || y >= BOARD_HEIGHT)
+    return;
+  pixels[y * BOARD_WIDTH + x] = color;
+}
 }
 
 void drawGame(Game& game, int* pixels)
@@ -131,7 +146,7 @@ void drawGame(Game& game, int* pixels)
   {
     mkColor(40, 40, 40),
     mkColor(255, 255, 0),
-    mkColor(0, 0, 255),
+    mkColor(64, 64, 255),
     mkColor(255, 0, 0),
     mkColor(0, 255, 0),
   };
@@ -141,8 +156,23 @@ void drawGame(Game& game, int* pixels)
     for(int col = 0; col < BOARD_WIDTH; ++col)
     {
       int c = game.board[row * BOARD_WIDTH + col];
-      pixels[row * BOARD_WIDTH + col] = colors[c % 5];
+      putPixel(pixels, col, row, colors[c % 5]);
     }
+  }
+
+  // Draw player status
+  for(int i = 0; i < MAX_PLAYERS; ++i)
+  {
+    auto color = colors[(1 + i) % 5];
+
+    for(int col = 10; col < 20; ++col)
+      putPixel(pixels, col, 10 + i * 10 + 0, color);
+
+    auto& bike = game.bikes[i];
+
+    for(int j = -2; j <= 2; ++j)
+      for(int k = -2; k <= 2; ++k)
+        putPixel(pixels, bike.x - k, bike.y - j, darken(color));
   }
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-static auto const MAX_PLAYERS = 2;
+static auto const MAX_PLAYERS = 4;
 static auto const BOARD_WIDTH = 1024;
 static auto const BOARD_HEIGHT = 768;
 
