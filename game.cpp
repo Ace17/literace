@@ -163,21 +163,27 @@ void drawGame(Game& game, int* pixels)
     mkColor(64, 64, 255),
     mkColor(255, 0, 0),
     mkColor(0, 255, 0),
+    mkColor(255, 255, 128),
+    mkColor(128, 128, 255),
+    mkColor(255, 128, 128),
+    mkColor(128, 255, 128),
   };
+
+  auto const N = (sizeof colors) / (sizeof *colors);
 
   for(int row = 0; row < BOARD_HEIGHT; ++row)
   {
     for(int col = 0; col < BOARD_WIDTH; ++col)
     {
       int c = game.board[row * BOARD_WIDTH + col];
-      putPixel(pixels, col, row, colors[c % 5]);
+      putPixel(pixels, col, row, colors[c % N]);
     }
   }
 
   // Draw player status
   for(int i = 0; i < MAX_PLAYERS; ++i)
   {
-    auto color = colors[(1 + i) % 5];
+    auto color = colors[(1 + i) % N];
 
     for(int col = 10; col < 20; ++col)
       putPixel(pixels, col, 10 + i * 10 + 0, color);
