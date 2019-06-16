@@ -40,4 +40,5 @@ struct Game
 
 void initGame(Game& game);
 void updateGame(Game& game, GameInput input);
+void drawGame(Game& game, int* pixels);
 

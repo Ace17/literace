@@ -9,40 +9,11 @@
 
 Game g_game;
 
-Uint32 mkColor(int r, int g, int b)
-{
-  Uint32 color = 0;
-  color |= 0xff;
-  color <<= 8;
-  color |= r;
-  color <<= 8;
-  color |= g;
-  color <<= 8;
-  color |= b;
-  return color;
-}
-
 void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
 {
-  static const Uint32 colors[] =
-  {
-    mkColor(40, 40, 40),
-    mkColor(255, 255, 0),
-    mkColor(0, 0, 255),
-    mkColor(255, 0, 0),
-    mkColor(0, 255, 0),
-  };
-
   static Uint32 pixels[BOARD_WIDTH * BOARD_HEIGHT];
 
-  for(int row = 0; row < BOARD_HEIGHT; ++row)
-  {
-    for(int col = 0; col < BOARD_WIDTH; ++col)
-    {
-      int c = g_game.board[row * BOARD_WIDTH + col];
-      pixels[row * BOARD_WIDTH + col] = colors[c % 5];
-    }
-  }
+  drawGame(g_game, (int*)pixels);
 
   SDL_UpdateTexture(texture, NULL, pixels, BOARD_WIDTH * sizeof(Uint32));
   SDL_RenderCopy(renderer, texture, NULL, NULL);
@@ -73,6 +44,8 @@ int main()
 
     updateGame(g_game, input);
     drawScreen(renderer, texture);
+
+    SDL_Delay(1);
   }
 
   destroyInput();

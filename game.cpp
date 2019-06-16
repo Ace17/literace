@@ -1,3 +1,4 @@
+///////////////////////////////////////////////////////////////////////////////
 // Game logic.
 // No SDL or I/O should appear here.
 #include "game.h"
@@ -102,5 +103,46 @@ void updateGame(Game& game, GameInput input)
 
   for(int i = 0; i < MAX_PLAYERS; ++i)
     updateBike(game, game.bikes[i], input.players[i], i);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Display.
+// No SDL or I/O should appear here.
+
+namespace
+{
+  int mkColor(int r, int g, int b)
+  {
+    int color = 0;
+    color |= 0xff;
+    color <<= 8;
+    color |= r;
+    color <<= 8;
+    color |= g;
+    color <<= 8;
+    color |= b;
+    return color;
+  }
+}
+
+void drawGame(Game& game, int* pixels)
+{
+  static const int colors[] =
+  {
+    mkColor(40, 40, 40),
+    mkColor(255, 255, 0),
+    mkColor(0, 0, 255),
+    mkColor(255, 0, 0),
+    mkColor(0, 255, 0),
+  };
+
+  for(int row = 0; row < BOARD_HEIGHT; ++row)
+  {
+    for(int col = 0; col < BOARD_WIDTH; ++col)
+    {
+      int c = game.board[row * BOARD_WIDTH + col];
+      pixels[row * BOARD_WIDTH + col] = colors[c % 5];
+    }
+  }
 }
 
