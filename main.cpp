@@ -3,9 +3,12 @@
 #include <cstdio>
 #include <cassert>
 #include <vector>
+#include <algorithm>
 #include "SDL.h"
 #include "input.h"
 #include "game.h"
+
+using namespace std;
 
 Game g_game;
 
@@ -22,17 +25,34 @@ void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
 
 struct Match : IEventSink
 {
+  void onRoundFinished() override
+  {
+    printf("Round finished: ");
+
+    for(auto killCount : kills)
+      printf(" %d", killCount);
+
+    printf("\n");
+  }
+
   void onKilled(int frameCount, int victim, int killer) override
   {
     if(victim == killer)
+    {
       printf("Bike %d committed suicide (lifetime=%d)\n", victim, frameCount);
+      kills[victim - 1] = max(kills[victim - 1] - 1, 0);
+    }
     else
+    {
       printf("Bike %d was killed by %d (lifetime=%d)\n", victim, killer, frameCount);
+      kills[killer - 1]++;
+    }
   }
 
   void onTurn(int frameCount, int bike) override
   {
-    printf("bike %d turned\n", bike);
+    if(0)
+      printf("bike %d turned\n", bike);
   }
 
   void onCrash(int frameCount, vector<int> victims) override
@@ -44,6 +64,8 @@ struct Match : IEventSink
 
     printf("\n");
   }
+
+  int kills[MAX_PLAYERS] {};
 };
 
 int main()

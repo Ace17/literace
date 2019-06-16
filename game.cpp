@@ -91,11 +91,13 @@ void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
 
 bool isGameOver(Game& game)
 {
-  for(auto& bike : game.bikes)
-    if(!bike.alive)
-      return true;
+  int survivors = 0;
 
-  return false;
+  for(auto& bike : game.bikes)
+    if(bike.alive)
+      survivors++;
+
+  return survivors < 2;
 }
 }
 
@@ -115,33 +117,70 @@ void initGame(Game& game)
   for(auto& cell : game.board)
     cell = 0;
 
+  game.obstacles.clear();
+
+  int obCount = rand() % 3 + 1;
+
+  for(int k = 0; k < obCount; ++k)
+  {
+    game.obstacles.push_back({
+      { rand() % BOARD_WIDTH, rand() % BOARD_HEIGHT },
+      { rand() % 3 - 1, rand() % 3 - 1 }, { rand() % 200 + 20, rand() % 200 + 20 }
+    });
+  }
+
   game.frameCount = 0;
+  game.gameIsOver = false;
 }
 
 void checkForCollisions(Game& game, GameInput input)
 {
   for(int i = 0; i < MAX_PLAYERS; ++i)
   {
+    if(!game.bikes[i].alive)
+      continue;
+
     for(int j = i + 1; j < MAX_PLAYERS; ++j)
     {
+      if(!game.bikes[j].alive)
+        continue;
+
       auto pos1 = game.bikes[i].pos;
       auto nextPos1 = computeNextBikePosition(game.bikes[i], input.players[i]);
       auto pos2 = game.bikes[j].pos;
       auto nextPos2 = computeNextBikePosition(game.bikes[j], input.players[j]);
 
-      if(nextPos1 == nextPos2)
+      if(nextPos1 == nextPos2
+         || (nextPos1 == pos2 && nextPos2 == pos1))
+      {
         game.sink->onCrash(game.frameCount, { i, j });
-
-      if(nextPos1 == pos2 && nextPos2 == pos1)
-        game.sink->onCrash(game.frameCount, { i, j });
+        game.bikes[i].alive = false;
+        game.bikes[j].alive = false;
+        return;
+      }
     }
   }
+}
+
+bool allBikeReady(Game& game)
+{
+  for(auto& bike : game.bikes)
+    if(bike.direction == Direction::Idle)
+      return false;
+
+  return true;
 }
 
 void updateGame(Game& game, GameInput input)
 {
   if(isGameOver(game))
   {
+    if(!game.gameIsOver)
+    {
+      game.gameIsOver = true;
+      game.sink->onRoundFinished();
+    }
+
     if(input.restart)
       initGame(game);
 
@@ -151,10 +190,36 @@ void updateGame(Game& game, GameInput input)
   for(int i = 0; i < MAX_PLAYERS; ++i)
     updateBikeDirection(game, game.bikes[i], input.players[i], 1 + i);
 
+  if(!allBikeReady(game))
+    return;
+
   checkForCollisions(game, input);
 
   for(int i = 0; i < MAX_PLAYERS; ++i)
-    updateBike(game, game.bikes[i], input.players[i], 1 + i);
+    if(game.bikes[i].alive)
+      updateBike(game, game.bikes[i], input.players[i], 1 + i);
+
+  for(auto& ob : game.obstacles)
+  {
+    ob.pos.x += rand() % 3 - 1;
+    ob.pos.y += rand() % 3 - 1;
+    ob.pos.x += ob.vel.x;
+    ob.pos.y += ob.vel.y;
+    ob.size.x += rand() % 3 - 1;
+    ob.size.y += rand() % 3 - 1;
+
+    if(ob.pos.x < 0)
+      ob.vel.x = abs(ob.vel.x);
+
+    if(ob.pos.x >= BOARD_WIDTH)
+      ob.vel.x = -abs(ob.vel.x);
+
+    if(ob.pos.y < 0)
+      ob.vel.y = abs(ob.vel.y);
+
+    if(ob.pos.y >= BOARD_HEIGHT)
+      ob.vel.y = -abs(ob.vel.y);
+  }
 
   game.frameCount++;
 }
@@ -188,8 +253,8 @@ int darken(int color)
 
 void putPixel(int* pixels, int x, int y, int color)
 {
-  if(x < 0 || y < 0 || x >= BOARD_WIDTH || y >= BOARD_HEIGHT)
-    return;
+  x = (x + BOARD_WIDTH) % BOARD_WIDTH;
+  y = (y + BOARD_HEIGHT) % BOARD_HEIGHT;
 
   pixels[y * BOARD_WIDTH + x] = color;
 }
@@ -219,6 +284,13 @@ void drawGame(Game& game, int* pixels)
       int c = game.board[row * BOARD_WIDTH + col];
       putPixel(pixels, col, row, colors[c % N]);
     }
+  }
+
+  for(auto& ob : game.obstacles)
+  {
+    for(int y = 0; y < ob.size.y; ++y)
+      for(int x = 0; x < ob.size.x; ++x)
+        putPixel(pixels, ob.pos.x + x, ob.pos.y + y, -1);
   }
 
   // Draw player status
