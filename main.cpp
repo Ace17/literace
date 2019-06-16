@@ -30,9 +30,19 @@ struct Match : IEventSink
       printf("Bike %d was killed by %d (lifetime=%d)\n", victim, killer, frameCount);
   }
 
-  void onTurn(int frameCount, int bike)
+  void onTurn(int frameCount, int bike) override
   {
     printf("bike %d turned\n", bike);
+  }
+
+  void onCrash(int frameCount, vector<int> victims) override
+  {
+    printf("crash! victims:");
+
+    for(auto victim : victims)
+      printf(" %d", victim);
+
+    printf("\n");
   }
 };
 

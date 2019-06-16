@@ -3,6 +3,7 @@
 // No SDL or I/O should appear here.
 #include "game.h"
 #include <cstdio>
+#include <map>
 
 namespace
 {
@@ -25,7 +26,7 @@ bool isOpposed(Direction a, Direction b)
   return a_dx == -b_dx && a_dy == -b_dy;
 }
 
-void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
+void updateBikeDirection(Game& game, Bike& bike, PlayerInput input, int team)
 {
   Direction wantedDirection = bike.direction;
 
@@ -48,7 +49,10 @@ void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
 
     bike.direction = wantedDirection;
   }
+}
 
+Vec2 computeNextBikePosition(Bike& bike, PlayerInput input)
+{
   int speed = 1;
 
   if(input.boost)
@@ -57,20 +61,32 @@ void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
   int dx = dirs[(int)bike.direction][0];
   int dy = dirs[(int)bike.direction][1];
 
-  bike.x += dx * speed;
-  bike.y += dy * speed;
+  Vec2 nextPos;
+  nextPos.x = bike.pos.x + dx * speed;
+  nextPos.y = bike.pos.y + dy * speed;
 
-  bike.x = (bike.x + BOARD_WIDTH) % BOARD_WIDTH;
-  bike.y = (bike.y + BOARD_HEIGHT) % BOARD_HEIGHT;
+  nextPos.x = (nextPos.x + BOARD_WIDTH) % BOARD_WIDTH;
+  nextPos.y = (nextPos.y + BOARD_HEIGHT) % BOARD_HEIGHT;
+  return nextPos;
+}
 
-  if(dx || dy)
-    if(game.board[bike.y * BOARD_WIDTH + bike.x])
+void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
+{
+  auto oldPos = bike.pos;
+  auto nextPos = computeNextBikePosition(bike, input);
+
+  if(oldPos != nextPos)
+  {
+    bike.pos = nextPos;
+
+    if(game.board[bike.pos.y * BOARD_WIDTH + bike.pos.x])
     {
-      game.sink->onKilled(game.frameCount, team, game.board[bike.y * BOARD_WIDTH + bike.x]);
+      game.sink->onKilled(game.frameCount, team, game.board[bike.pos.y * BOARD_WIDTH + bike.pos.x]);
       bike.alive = false;
     }
+  }
 
-  game.board[bike.y * BOARD_WIDTH + bike.x] = team;
+  game.board[bike.pos.y * BOARD_WIDTH + bike.pos.x] = team;
 }
 
 bool isGameOver(Game& game)
@@ -90,8 +106,8 @@ void initGame(Game& game)
   for(auto& bike : game.bikes)
   {
     bike = {};
-    bike.x = (k + 1) * BOARD_WIDTH / (MAX_PLAYERS + 1);
-    bike.y = BOARD_HEIGHT / 2;
+    bike.pos.x = (k + 1) * BOARD_WIDTH / (MAX_PLAYERS + 1);
+    bike.pos.y = BOARD_HEIGHT / 2;
 
     ++k;
   }
@@ -100,6 +116,26 @@ void initGame(Game& game)
     cell = 0;
 
   game.frameCount = 0;
+}
+
+void checkForCollisions(Game& game, GameInput input)
+{
+  for(int i = 0; i < MAX_PLAYERS; ++i)
+  {
+    for(int j = i + 1; j < MAX_PLAYERS; ++j)
+    {
+      auto pos1 = game.bikes[i].pos;
+      auto nextPos1 = computeNextBikePosition(game.bikes[i], input.players[i]);
+      auto pos2 = game.bikes[j].pos;
+      auto nextPos2 = computeNextBikePosition(game.bikes[j], input.players[j]);
+
+      if(nextPos1 == nextPos2)
+        game.sink->onCrash(game.frameCount, { i, j });
+
+      if(nextPos1 == pos2 && nextPos2 == pos1)
+        game.sink->onCrash(game.frameCount, { i, j });
+    }
+  }
 }
 
 void updateGame(Game& game, GameInput input)
@@ -111,6 +147,11 @@ void updateGame(Game& game, GameInput input)
 
     return;
   }
+
+  for(int i = 0; i < MAX_PLAYERS; ++i)
+    updateBikeDirection(game, game.bikes[i], input.players[i], 1 + i);
+
+  checkForCollisions(game, input);
 
   for(int i = 0; i < MAX_PLAYERS; ++i)
     updateBike(game, game.bikes[i], input.players[i], 1 + i);
@@ -192,7 +233,7 @@ void drawGame(Game& game, int* pixels)
 
     for(int j = -2; j <= 2; ++j)
       for(int k = -2; k <= 2; ++k)
-        putPixel(pixels, bike.x - k, bike.y - j, darken(color));
+        putPixel(pixels, bike.pos.x - k, bike.pos.y - j, darken(color));
   }
 }
 
