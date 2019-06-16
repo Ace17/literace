@@ -12,6 +12,7 @@ struct HumanWithAJoystick
 };
 
 static std::vector<HumanWithAJoystick> g_humans;
+static GameInput g_input {};
 
 template<typename T, typename Lambda>
 int indexOf(std::vector<T> const& array, Lambda predicate)
@@ -173,12 +174,14 @@ void processEvent(SDL_Event const& event, GameInput& input)
   }
 }
 
-void processInput(GameInput& input)
+GameInput processInput()
 {
   SDL_Event event;
 
   while(SDL_PollEvent(&event))
-    processEvent(event, input);
+    processEvent(event, g_input);
+
+  return g_input;
 }
 
 void destroyInput()

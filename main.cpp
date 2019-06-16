@@ -64,11 +64,9 @@ int main()
 
   initGame(g_game);
 
-  GameInput input {};
-
   while(1)
   {
-    processInput(input);
+    auto input = processInput();
 
     if(input.quit)
       break;

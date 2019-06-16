@@ -2,6 +2,6 @@
 
 #include "game.h" // GameInput
 
-void processInput(GameInput& input);
+GameInput processInput();
 void destroyInput();
 
