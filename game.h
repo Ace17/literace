@@ -32,10 +32,23 @@ struct Bike
   Direction direction;
 };
 
+struct IEventSink
+{
+  virtual void onKilled(int victim, int killer) = 0;
+};
+
+struct NullEventSink : IEventSink
+{
+  void onKilled(int, int) override {};
+};
+
+static NullEventSink nullSink;
+
 struct Game
 {
   Bike bikes[MAX_PLAYERS];
   char board[BOARD_WIDTH * BOARD_HEIGHT];
+  IEventSink* sink = &nullSink;
 };
 
 void initGame(Game& game);

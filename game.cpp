@@ -2,6 +2,7 @@
 // Game logic.
 // No SDL or I/O should appear here.
 #include "game.h"
+#include <cstdio>
 
 namespace
 {
@@ -59,9 +60,12 @@ void updateBike(Game& game, Bike& bike, PlayerInput input, int team)
 
   if(dx || dy)
     if(game.board[bike.y * BOARD_WIDTH + bike.x])
+    {
+      game.sink->onKilled(team, game.board[bike.y * BOARD_WIDTH + bike.x]);
       bike.alive = false;
+    }
 
-  game.board[bike.y * BOARD_WIDTH + bike.x] = 1 + team;
+  game.board[bike.y * BOARD_WIDTH + bike.x] = team;
 }
 
 bool isGameOver(Game& game)
@@ -102,7 +106,7 @@ void updateGame(Game& game, GameInput input)
   }
 
   for(int i = 0; i < MAX_PLAYERS; ++i)
-    updateBike(game, game.bikes[i], input.players[i], i);
+    updateBike(game, game.bikes[i], input.players[i], 1 + i);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -136,6 +140,7 @@ void putPixel(int* pixels, int x, int y, int color)
 {
   if(x < 0 || y < 0 || x >= BOARD_WIDTH || y >= BOARD_HEIGHT)
     return;
+
   pixels[y * BOARD_WIDTH + x] = color;
 }
 }

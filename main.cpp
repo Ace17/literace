@@ -20,6 +20,14 @@ void drawScreen(SDL_Renderer* renderer, SDL_Texture* texture)
   SDL_RenderPresent(renderer);
 }
 
+struct Match : IEventSink
+{
+  void onKilled(int victim, int killer) override
+  {
+    printf("Bike %d was killed by %d\n", victim, killer);
+  }
+};
+
 int main()
 {
   SDL_Init(SDL_INIT_EVERYTHING);
@@ -33,6 +41,8 @@ int main()
   auto texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, BOARD_WIDTH, BOARD_HEIGHT);
   assert(texture);
 
+  Match match;
+  g_game.sink = &match;
   initGame(g_game);
 
   while(1)
