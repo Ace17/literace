@@ -7,7 +7,7 @@ SRCS:=\
 	input.cpp \
 	main.cpp \
 
-PKGS+=sdl2
+PKGS+=sdl2 gl
 CXXFLAGS+=$(shell pkg-config $(PKGS) --cflags)
 LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
 
