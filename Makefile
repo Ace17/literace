@@ -4,6 +4,7 @@ CXXFLAGS+=-O3
 
 SRCS:=\
 	game.cpp \
+	display.cpp \
 	input.cpp \
 	main.cpp \
 
