@@ -68,6 +68,8 @@ struct Match : IEventSink
   int kills[MAX_PLAYERS] {};
 };
 
+static auto const TIMESTEP_MS = 5;
+
 int main()
 {
   SDL_Init(SDL_INIT_EVERYTHING);
@@ -85,16 +87,32 @@ int main()
   g_game.sink = &match;
   initGame(g_game);
 
-  while(1)
+  int64_t prev = SDL_GetTicks();
+  int64_t timeAccumulator = 0;
+
+  bool keepGoing = true;
+
+  while(keepGoing)
   {
-    auto input = processInput();
+    auto now = SDL_GetTicks();
+    timeAccumulator += now - prev;
+    prev = now;
 
-    if(input.quit)
-      break;
+    while(timeAccumulator > 0)
+    {
+      timeAccumulator -= TIMESTEP_MS;
+      auto input = processInput();
 
-    updateGame(g_game, input);
+      if(input.quit)
+      {
+        keepGoing = false;
+        break;
+      }
+
+      updateGame(g_game, input);
+    }
+
     drawScreen(renderer, texture);
-
     SDL_Delay(1);
   }
 

@@ -190,7 +190,7 @@ void updateGame(Game& game, GameInput input)
   for(int i = 0; i < MAX_PLAYERS; ++i)
     updateBikeDirection(game, game.bikes[i], input.players[i], 1 + i);
 
-  if(!allBikeReady(game))
+  if(!allBikeReady(game) && 0)
     return;
 
   checkForCollisions(game, input);
