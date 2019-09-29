@@ -9,17 +9,17 @@ SRCS:=\
 	main.cpp \
 
 PKGS+=sdl2 gl
-CXXFLAGS+=$(shell pkg-config $(PKGS) --cflags)
-LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
+PKG_CFLAGS+=$(shell pkg-config $(PKGS) --cflags)
+PKG_LDFLAGS+=$(shell pkg-config $(PKGS) --libs)
 
 $(BIN)/literace.exe: $(SRCS:%=$(BIN)/%.o)
 	@mkdir -p $(dir $@)
-	$(CXX) -o "$@" $(LDFLAGS) $^
+	$(CXX) -o "$@" $(LDFLAGS) $^ $(PKG_LDFLAGS)
 
 $(BIN)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -c $(CXXFLAGS) -o "$@" $<
-	@$(CXX) -MM -MT "$@" -MP -c $(CXXFLAGS) -o "$@.dep" $<
+	$(CXX) -c $(CXXFLAGS) -o "$@" $< $(PKG_CFLAGS)
+	@$(CXX) -MM -MT "$@" -MP -c $(CXXFLAGS) -o "$@.dep" $< $(PKG_CFLAGS)
 
 clean:
 	rm -rf $(BIN)
