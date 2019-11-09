@@ -3,7 +3,8 @@
 // No SDL or I/O should appear here.
 #include "game.h"
 #include <cstdio>
-#include <map>
+#include <cstdlib>
+#include <cassert>
 
 namespace
 {
@@ -134,17 +135,23 @@ void initGame(Game& game)
   game.gameIsOver = false;
 }
 
-bool pointInsideSegment(int p, int left, int right)
+bool pointInsideSegment(int p, int left, int width, int mod)
 {
-  return p >= left && p <= right;
+  p = (p + mod) % mod;
+  left = (left + mod) % mod;
+
+  while(p < left)
+    p += mod;
+
+  return p >= left && p <= left + width;
 }
 
 bool pointInsideRectangle(Vec2 pos, Vec2 rectPos, Vec2 rectSize)
 {
-  if(!pointInsideSegment(pos.x, rectPos.x, rectPos.x + rectSize.x))
+  if(!pointInsideSegment(pos.x, rectPos.x, rectSize.x, BOARD_WIDTH))
     return false;
 
-  if(!pointInsideSegment(pos.y, rectPos.y, rectPos.y + rectSize.y))
+  if(!pointInsideSegment(pos.y, rectPos.y, rectSize.y, BOARD_HEIGHT))
     return false;
 
   return true;
@@ -207,6 +214,8 @@ void eraseRectangle(Game& game, Vec2 pos, Vec2 size)
     {
       int xm = (pos.x + x) % BOARD_WIDTH;
       int ym = (pos.y + y) % BOARD_HEIGHT;
+      assert(xm >= 0);
+      assert(ym >= 0);
       game.board[ym * BOARD_WIDTH + xm] = 0;
     }
 }
@@ -233,6 +242,9 @@ void updateObstacles(Game& game)
 
     if(ob.pos.y >= BOARD_HEIGHT)
       ob.vel.y = -abs(ob.vel.y);
+
+    ob.pos.x = (ob.pos.x + BOARD_WIDTH) % BOARD_WIDTH;
+    ob.pos.y = (ob.pos.y + BOARD_HEIGHT) % BOARD_HEIGHT;
 
     eraseRectangle(game, ob.pos, ob.size);
   }

@@ -1,6 +1,7 @@
 BIN?=bin
 
-CXXFLAGS+=-O3
+CXXFLAGS+=-g
+LDFLAGS+=-g
 
 SRCS:=\
 	game.cpp \
