@@ -1,16 +1,20 @@
 #pragma once
 
-struct GameInput;
+#include <vector>
 
-enum class SceneId
+struct GameInput;
+struct IScene;
+
+struct ISceneFactory
 {
-  Playing,
-  Scores
+  virtual IScene* createPlayingScene() = 0;
+  virtual IScene* createScoresScene(std::vector<int> scores) = 0;
 };
 
 struct IScene
 {
-  virtual SceneId update(GameInput input) = 0;
+  ISceneFactory* factory = nullptr;
+  virtual IScene* update(GameInput input) = 0;
   virtual void draw(int* pixels) = 0;
 };
 

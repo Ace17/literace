@@ -292,9 +292,9 @@ int updateGame(Game& game, GameInput input)
   }
 
   if(game.gameOverDelay > 0)
-    game.gameOverDelay --;
+    game.gameOverDelay--;
 
-  return game.gameIsOver && game.gameOverDelay == 0 ? 1: 0;
+  return game.gameIsOver && game.gameOverDelay == 0 ? 1 : 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -95,17 +95,22 @@ static auto const TIMESTEP_MS = 1;
 
 struct PlayingScene : IScene
 {
-  PlayingScene(Terminal* terminal_, Match* match_)
+  PlayingScene(Terminal* terminal_, Match* match_) : m_match(match_)
   {
     m_game.terminal = terminal_;
     m_game.sink = match_;
     initGame(m_game);
   }
 
-  SceneId update(GameInput input) override
+  IScene* update(GameInput input) override
   {
     int ret = updateGame(m_game, input);
-    return ret ? SceneId::Scores : SceneId::Playing;
+    std::vector<int> scores;
+
+    for(auto& score : m_match->kills)
+      scores.push_back(score);
+
+    return ret ? factory->createScoresScene(scores) : nullptr;
   }
 
   void draw(int* pixels) override
@@ -113,6 +118,7 @@ struct PlayingScene : IScene
     drawGame(m_game, pixels);
   }
 
+  Match* const m_match;
   Game m_game {};
 };
 
@@ -120,33 +126,34 @@ struct ScoreScene : IScene
 {
   int timer = 1000;
 
-  SceneId update(GameInput input) override
+  ScoreScene(ITerminal* terminal_, std::vector<int> scores_) : terminal(terminal_), scores(scores_)
   {
-    timer --;
-    if(timer < 0)
-      return SceneId::Playing;
-    else
-      return SceneId::Scores;
   }
 
-  void draw(int* pixels) override 
+  IScene* update(GameInput input) override
   {
-    memset(pixels, 0x77, BOARD_WIDTH * BOARD_HEIGHT * sizeof(int));
+    timer--;
+
+    if(timer > 0)
+      return nullptr;
+
+    return factory->createPlayingScene();
   }
+
+  void draw(int* pixels) override
+  {
+    memset(pixels, 0, BOARD_WIDTH * BOARD_HEIGHT * sizeof(int));
+
+    for(int i = 0; i < scores.size(); ++i)
+    {
+      for(int k = 0; k < scores[i]; ++k)
+        terminal->drawHead(Vec2{ 50 + k * 25, 50 + i * 25 }, i + 1);
+    }
+  }
+
+  ITerminal* const terminal;
+  const std::vector<int> scores;
 };
-
-std::unique_ptr<IScene> createScene(SceneId id, Terminal* terminal, Match* match)
-{
-  switch(id)
-  {
-  case SceneId::Playing:
-    return std::make_unique<PlayingScene>(terminal, match);
-  case SceneId::Scores:
-    return std::make_unique<ScoreScene>();
-  }
-  assert(0);
-  return nullptr;
-}
 
 int main()
 {
@@ -154,11 +161,31 @@ int main()
 
   auto display = createDisplay(BOARD_WIDTH, BOARD_HEIGHT);
 
-  Terminal terminal;
-  Match match;
+  struct App : ISceneFactory
+  {
+    Terminal terminal;
+    Match match;
 
-  SceneId sceneId = SceneId::Playing;
-  std::unique_ptr<IScene> scene = createScene(sceneId, &terminal, &match);
+    IScene* createPlayingScene() override
+    {
+      return withFactory(new PlayingScene(&terminal, &match));
+    }
+
+    IScene* createScoresScene(std::vector<int> scores)
+    {
+      return withFactory(new ScoreScene(&terminal, scores));
+    }
+
+    IScene* withFactory(IScene* s)
+    {
+      s->factory = this;
+      return s;
+    }
+  };
+
+  App app;
+
+  std::unique_ptr<IScene> scene(app.createPlayingScene());
 
   int64_t prev = SDL_GetTicks();
   int64_t timeAccumulator = 0;
@@ -182,19 +209,19 @@ int main()
         break;
       }
 
-      auto nextSceneId = scene->update(input);
-      if(sceneId != nextSceneId)
+      auto newScene = scene->update(input);
+
+      if(newScene)
       {
-        printf("New scene: %d -> %d\n", (int)sceneId, (int)nextSceneId);
-        scene = createScene(nextSceneId, &terminal, &match);
-        sceneId = nextSceneId;
+        scene.reset(newScene);
+        printf("New scene\n");
       }
     }
 
-    scene->draw((int*)terminal.pixels);
+    scene->draw((int*)app.terminal.pixels);
 
     // drawScreen
-    display->refresh(terminal.pixels);
+    display->refresh(app.terminal.pixels);
   }
 
   destroyInput();
