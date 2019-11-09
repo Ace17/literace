@@ -92,11 +92,13 @@ static const int getColor(int index)
 struct ITerminal
 {
   virtual void drawHead(Vec2 pos, int colorIndex) = 0;
+  virtual void drawObstacle(Vec2 pos, Vec2 size) = 0;
 };
 
 struct NullTerminal : ITerminal
 {
   void drawHead(Vec2 pos, int colorIndex) override {};
+  void drawObstacle(Vec2 pos, Vec2 size) override {};
 };
 
 static NullTerminal nullTerminal;

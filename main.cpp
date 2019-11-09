@@ -15,7 +15,14 @@ struct Terminal : ITerminal
   {
     for(int j = -2; j <= 2; ++j)
       for(int k = -2; k <= 2; ++k)
-        putPixel((int*)pixels, pos.x - k, pos.y - j, darken(getColor(colorIndex)));
+        putPixel(pixels, pos.x - k, pos.y - j, darken(getColor(colorIndex)));
+  }
+
+  void drawObstacle(Vec2 pos, Vec2 size) override
+  {
+    for(int y = 0; y < size.y; ++y)
+      for(int x = 0; x < size.x; ++x)
+        putPixel(pixels, pos.x + x, pos.y + y, -1);
   }
 
   static int darken(int color)
@@ -26,7 +33,7 @@ struct Terminal : ITerminal
     return mkColor(r / 2, g / 2, b / 2);
   }
 
-  static void putPixel(int* pixels, int x, int y, int color)
+  static void putPixel(Uint32* pixels, int x, int y, int color)
   {
     x = (x + BOARD_WIDTH) % BOARD_WIDTH;
     y = (y + BOARD_HEIGHT) % BOARD_HEIGHT;

@@ -264,11 +264,7 @@ void drawGame(Game& game, int* pixels)
   }
 
   for(auto& ob : game.obstacles)
-  {
-    for(int y = 0; y < ob.size.y; ++y)
-      for(int x = 0; x < ob.size.x; ++x)
-        putPixel(pixels, ob.pos.x + x, ob.pos.y + y, -1);
-  }
+    game.terminal->drawObstacle(ob.pos, ob.size);
 
   // Draw player status
   for(int i = 0; i < MAX_PLAYERS; ++i)
