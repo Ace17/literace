@@ -200,6 +200,44 @@ bool allBikeReady(Game& game)
   return true;
 }
 
+void eraseRectangle(Game& game, Vec2 pos, Vec2 size)
+{
+  for(int y = 0; y < size.y; ++y)
+    for(int x = 0; x < size.x; ++x)
+    {
+      int xm = (pos.x + x) % BOARD_WIDTH;
+      int ym = (pos.y + y) % BOARD_HEIGHT;
+      game.board[ym * BOARD_WIDTH + xm] = 0;
+    }
+}
+
+void updateObstacles(Game& game)
+{
+  for(auto& ob : game.obstacles)
+  {
+    ob.pos.x += rand() % 3 - 1;
+    ob.pos.y += rand() % 3 - 1;
+    ob.pos.x += ob.vel.x;
+    ob.pos.y += ob.vel.y;
+    ob.size.x += rand() % 3 - 1;
+    ob.size.y += rand() % 3 - 1;
+
+    if(ob.pos.x < 0)
+      ob.vel.x = abs(ob.vel.x);
+
+    if(ob.pos.x >= BOARD_WIDTH)
+      ob.vel.x = -abs(ob.vel.x);
+
+    if(ob.pos.y < 0)
+      ob.vel.y = abs(ob.vel.y);
+
+    if(ob.pos.y >= BOARD_HEIGHT)
+      ob.vel.y = -abs(ob.vel.y);
+
+    eraseRectangle(game, ob.pos, ob.size);
+  }
+}
+
 void oneTurn(Game& game, GameInput input)
 {
   if(isGameOver(game))
@@ -228,28 +266,7 @@ void oneTurn(Game& game, GameInput input)
     if(game.bikes[i].alive)
       updateBike(game, game.bikes[i], input.players[i], 1 + i);
 
-  for(auto& ob : game.obstacles)
-  {
-    ob.pos.x += rand() % 3 - 1;
-    ob.pos.y += rand() % 3 - 1;
-    ob.pos.x += ob.vel.x;
-    ob.pos.y += ob.vel.y;
-    ob.size.x += rand() % 3 - 1;
-    ob.size.y += rand() % 3 - 1;
-
-    if(ob.pos.x < 0)
-      ob.vel.x = abs(ob.vel.x);
-
-    if(ob.pos.x >= BOARD_WIDTH)
-      ob.vel.x = -abs(ob.vel.x);
-
-    if(ob.pos.y < 0)
-      ob.vel.y = abs(ob.vel.y);
-
-    if(ob.pos.y >= BOARD_HEIGHT)
-      ob.vel.y = -abs(ob.vel.y);
-  }
-
+  updateObstacles(game);
   game.frameCount++;
 }
 
