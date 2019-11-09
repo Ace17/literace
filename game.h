@@ -130,9 +130,10 @@ struct Game
   ITerminal* terminal = &nullTerminal;
   int frameCount;
   bool gameIsOver;
+  int gameOverDelay;
 };
 
 void initGame(Game& game);
-void updateGame(Game& game, GameInput input);
+int updateGame(Game& game, GameInput input);
 void drawGame(Game& game, int* pixels);
 

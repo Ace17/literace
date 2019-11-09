@@ -1,11 +1,13 @@
 // "Terminal" side.
 #include <cstdio>
+#include <cassert>
 #include <vector>
 #include <algorithm>
 #include "SDL.h"
 #include "display.h"
 #include "input.h"
 #include "game.h"
+#include "scene.h"
 
 using namespace std;
 
@@ -91,21 +93,72 @@ struct Match : IEventSink
 
 static auto const TIMESTEP_MS = 1;
 
+struct PlayingScene : IScene
+{
+  PlayingScene(Terminal* terminal_, Match* match_)
+  {
+    m_game.terminal = terminal_;
+    m_game.sink = match_;
+    initGame(m_game);
+  }
+
+  SceneId update(GameInput input) override
+  {
+    int ret = updateGame(m_game, input);
+    return ret ? SceneId::Scores : SceneId::Playing;
+  }
+
+  void draw(int* pixels) override
+  {
+    drawGame(m_game, pixels);
+  }
+
+  Game m_game {};
+};
+
+struct ScoreScene : IScene
+{
+  int timer = 1000;
+
+  SceneId update(GameInput input) override
+  {
+    timer --;
+    if(timer < 0)
+      return SceneId::Playing;
+    else
+      return SceneId::Scores;
+  }
+
+  void draw(int* pixels) override 
+  {
+    memset(pixels, 0x77, BOARD_WIDTH * BOARD_HEIGHT * sizeof(int));
+  }
+};
+
+std::unique_ptr<IScene> createScene(SceneId id, Terminal* terminal, Match* match)
+{
+  switch(id)
+  {
+  case SceneId::Playing:
+    return std::make_unique<PlayingScene>(terminal, match);
+  case SceneId::Scores:
+    return std::make_unique<ScoreScene>();
+  }
+  assert(0);
+  return nullptr;
+}
+
 int main()
 {
   SDL_Init(SDL_INIT_EVERYTHING);
 
   auto display = createDisplay(BOARD_WIDTH, BOARD_HEIGHT);
 
-  Game g_game;
-
   Terminal terminal;
-  g_game.terminal = &terminal;
-
   Match match;
-  g_game.sink = &match;
 
-  initGame(g_game);
+  SceneId sceneId = SceneId::Playing;
+  std::unique_ptr<IScene> scene = createScene(sceneId, &terminal, &match);
 
   int64_t prev = SDL_GetTicks();
   int64_t timeAccumulator = 0;
@@ -129,10 +182,16 @@ int main()
         break;
       }
 
-      updateGame(g_game, input);
+      auto nextSceneId = scene->update(input);
+      if(sceneId != nextSceneId)
+      {
+        printf("New scene: %d -> %d\n", (int)sceneId, (int)nextSceneId);
+        scene = createScene(nextSceneId, &terminal, &match);
+        sceneId = nextSceneId;
+      }
     }
 
-    drawGame(g_game, (int*)terminal.pixels);
+    scene->draw((int*)terminal.pixels);
 
     // drawScreen
     display->refresh(terminal.pixels);

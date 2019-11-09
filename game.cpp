@@ -257,11 +257,9 @@ void oneTurn(Game& game, GameInput input)
     if(!game.gameIsOver)
     {
       game.gameIsOver = true;
+      game.gameOverDelay = 1000;
       game.sink->onRoundFinished();
     }
-
-    if(input.restart)
-      initGame(game);
 
     return;
   }
@@ -282,7 +280,7 @@ void oneTurn(Game& game, GameInput input)
   game.frameCount++;
 }
 
-void updateGame(Game& game, GameInput input)
+int updateGame(Game& game, GameInput input)
 {
   static int turnAccumulator = 0;
   turnAccumulator += 100;
@@ -292,6 +290,11 @@ void updateGame(Game& game, GameInput input)
     turnAccumulator -= 500;
     oneTurn(game, input);
   }
+
+  if(game.gameOverDelay > 0)
+    game.gameOverDelay --;
+
+  return game.gameIsOver && game.gameOverDelay == 0 ? 1: 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
