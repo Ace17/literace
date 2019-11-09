@@ -11,7 +11,7 @@ using namespace std;
 namespace
 {
 #define SAFE_GL(a) \
-  do { a; ensureGl(# a, __LINE__); } while(0)
+  do { a; ensureGl(# a, __LINE__); } while (0)
 
 static
 void ensureGl(char const* expr, int line)

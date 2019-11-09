@@ -58,11 +58,54 @@ struct IEventSink
   virtual void onTurn(int frameCount, int bike) = 0;
 };
 
+static int mkColor(int r, int g, int b)
+{
+  int color = 0;
+  color |= 0xff;
+  color <<= 8;
+  color |= r;
+  color <<= 8;
+  color |= g;
+  color <<= 8;
+  color |= b;
+  return color;
+}
+
+static const int getColor(int index)
+{
+  static const int c[] =
+  {
+    mkColor(40, 40, 40),
+    mkColor(255, 255, 0),
+    mkColor(64, 64, 255),
+    mkColor(255, 0, 0),
+    mkColor(0, 255, 0),
+    mkColor(255, 255, 128),
+    mkColor(128, 128, 255),
+    mkColor(255, 128, 128),
+    mkColor(128, 255, 128),
+  };
+
+  return c[index % 8];
+}
+
+struct ITerminal
+{
+  virtual void drawHead(Vec2 pos, int colorIndex) = 0;
+};
+
+struct NullTerminal : ITerminal
+{
+  void drawHead(Vec2 pos, int colorIndex) override {};
+};
+
+static NullTerminal nullTerminal;
+
 struct NullEventSink : IEventSink
 {
   void onRoundFinished() override {};
   void onKilled(int, int, int) override {};
-  void onCrash(int, vector<int> ) override {};
+  void onCrash(int, vector<int>) override {};
   void onTurn(int, int) override {};
 };
 
@@ -81,6 +124,7 @@ struct Game
   vector<Obstacle> obstacles;
   char board[BOARD_WIDTH * BOARD_HEIGHT];
   IEventSink* sink = &nullSink;
+  ITerminal* terminal = &nullTerminal;
   int frameCount;
   bool gameIsOver;
 };

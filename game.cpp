@@ -243,27 +243,6 @@ void updateGame(Game& game, GameInput input)
 
 namespace
 {
-int mkColor(int r, int g, int b)
-{
-  int color = 0;
-  color |= 0xff;
-  color <<= 8;
-  color |= r;
-  color <<= 8;
-  color |= g;
-  color <<= 8;
-  color |= b;
-  return color;
-}
-
-int darken(int color)
-{
-  int r = (color >> 16) & 0xff;
-  int g = (color >> 8) & 0xff;
-  int b = (color >> 0) & 0xff;
-  return mkColor(r / 2, g / 2, b / 2);
-}
-
 void putPixel(int* pixels, int x, int y, int color)
 {
   x = (x + BOARD_WIDTH) % BOARD_WIDTH;
@@ -275,27 +254,12 @@ void putPixel(int* pixels, int x, int y, int color)
 
 void drawGame(Game& game, int* pixels)
 {
-  static const int colors[] =
-  {
-    mkColor(40, 40, 40),
-    mkColor(255, 255, 0),
-    mkColor(64, 64, 255),
-    mkColor(255, 0, 0),
-    mkColor(0, 255, 0),
-    mkColor(255, 255, 128),
-    mkColor(128, 128, 255),
-    mkColor(255, 128, 128),
-    mkColor(128, 255, 128),
-  };
-
-  auto const N = (sizeof colors) / (sizeof *colors);
-
   for(int row = 0; row < BOARD_HEIGHT; ++row)
   {
     for(int col = 0; col < BOARD_WIDTH; ++col)
     {
       int c = game.board[row * BOARD_WIDTH + col];
-      putPixel(pixels, col, row, colors[c % N]);
+      putPixel(pixels, col, row, getColor(c));
     }
   }
 
@@ -309,16 +273,15 @@ void drawGame(Game& game, int* pixels)
   // Draw player status
   for(int i = 0; i < MAX_PLAYERS; ++i)
   {
-    auto color = colors[(1 + i) % N];
+    auto colorIndex = 1 + i;
+    auto color = getColor(colorIndex);
 
     for(int col = 10; col < 20; ++col)
       putPixel(pixels, col, 10 + i * 10 + 0, color);
 
     auto& bike = game.bikes[i];
 
-    for(int j = -2; j <= 2; ++j)
-      for(int k = -2; k <= 2; ++k)
-        putPixel(pixels, bike.pos.x - k, bike.pos.y - j, darken(color));
+    game.terminal->drawHead(bike.pos, colorIndex);
   }
 }
 

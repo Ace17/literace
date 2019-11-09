@@ -9,6 +9,34 @@
 
 using namespace std;
 
+struct Terminal : ITerminal
+{
+  void drawHead(Vec2 pos, int colorIndex) override
+  {
+    for(int j = -2; j <= 2; ++j)
+      for(int k = -2; k <= 2; ++k)
+        putPixel((int*)pixels, pos.x - k, pos.y - j, darken(getColor(colorIndex)));
+  }
+
+  static int darken(int color)
+  {
+    int r = (color >> 16) & 0xff;
+    int g = (color >> 8) & 0xff;
+    int b = (color >> 0) & 0xff;
+    return mkColor(r / 2, g / 2, b / 2);
+  }
+
+  static void putPixel(int* pixels, int x, int y, int color)
+  {
+    x = (x + BOARD_WIDTH) % BOARD_WIDTH;
+    y = (y + BOARD_HEIGHT) % BOARD_HEIGHT;
+
+    pixels[y * BOARD_WIDTH + x] = color;
+  }
+
+  Uint32 pixels[BOARD_WIDTH * BOARD_HEIGHT];
+};
+
 struct Match : IEventSink
 {
   void onRoundFinished() override
@@ -56,10 +84,10 @@ struct Match : IEventSink
 
 void drawScreen(IDisplay* display, Game& game)
 {
-  static Uint32 pixels[BOARD_WIDTH * BOARD_HEIGHT];
-
-  drawGame(game, (int*)pixels);
-  display->refresh(pixels);
+  static Terminal terminal;
+  game.terminal = &terminal;
+  drawGame(game, (int*)terminal.pixels);
+  display->refresh(terminal.pixels);
 }
 
 static auto const TIMESTEP_MS = 1;
