@@ -62,7 +62,7 @@ void drawScreen(IDisplay* display, Game& game)
   display->refresh(pixels);
 }
 
-static auto const TIMESTEP_MS = 5;
+static auto const TIMESTEP_MS = 1;
 
 int main()
 {
@@ -102,7 +102,6 @@ int main()
     }
 
     drawScreen(display.get(), g_game);
-    SDL_Delay(1);
   }
 
   destroyInput();

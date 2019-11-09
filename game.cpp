@@ -110,6 +110,7 @@ void initGame(Game& game)
     bike = {};
     bike.pos.x = (k + 1) * BOARD_WIDTH / (MAX_PLAYERS + 1);
     bike.pos.y = BOARD_HEIGHT / 2;
+    bike.direction = Direction::Up;
 
     ++k;
   }
@@ -171,7 +172,7 @@ bool allBikeReady(Game& game)
   return true;
 }
 
-void updateGame(Game& game, GameInput input)
+void oneTurn(Game& game, GameInput input)
 {
   if(isGameOver(game))
   {
@@ -222,6 +223,18 @@ void updateGame(Game& game, GameInput input)
   }
 
   game.frameCount++;
+}
+
+void updateGame(Game& game, GameInput input)
+{
+  static int turnAccumulator = 0;
+  turnAccumulator += 100;
+
+  while(turnAccumulator > 0)
+  {
+    turnAccumulator -= 500;
+    oneTurn(game, input);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
