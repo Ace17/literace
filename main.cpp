@@ -89,14 +89,6 @@ struct Match : IEventSink
   int kills[MAX_PLAYERS] {};
 };
 
-void drawScreen(IDisplay* display, Game& game)
-{
-  static Terminal terminal;
-  game.terminal = &terminal;
-  drawGame(game, (int*)terminal.pixels);
-  display->refresh(terminal.pixels);
-}
-
 static auto const TIMESTEP_MS = 1;
 
 int main()
@@ -107,8 +99,12 @@ int main()
 
   Game g_game;
 
+  Terminal terminal;
+  g_game.terminal = &terminal;
+
   Match match;
   g_game.sink = &match;
+
   initGame(g_game);
 
   int64_t prev = SDL_GetTicks();
@@ -136,7 +132,10 @@ int main()
       updateGame(g_game, input);
     }
 
-    drawScreen(display.get(), g_game);
+    drawGame(g_game, (int*)terminal.pixels);
+
+    // drawScreen
+    display->refresh(terminal.pixels);
   }
 
   destroyInput();
