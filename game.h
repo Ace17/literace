@@ -118,6 +118,7 @@ struct Obstacle
   Vec2 pos;
   Vec2 vel;
   Vec2 size;
+  bool solid = false;
 };
 
 struct Game

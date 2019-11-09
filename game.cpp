@@ -124,14 +124,30 @@ void initGame(Game& game)
 
   for(int k = 0; k < obCount; ++k)
   {
-    game.obstacles.push_back({
-      { rand() % BOARD_WIDTH, rand() % BOARD_HEIGHT },
-      { rand() % 3 - 1, rand() % 3 - 1 }, { rand() % 200 + 20, rand() % 200 + 20 }
-    });
+    Vec2 pos = { rand() % BOARD_WIDTH, rand() % BOARD_HEIGHT };
+    Vec2 vel = { rand() % 3 - 1, rand() % 3 - 1 };
+    Vec2 size = { rand() % 200 + 20, rand() % 200 + 20 };
+    game.obstacles.push_back({ pos, vel, size, true });
   }
 
   game.frameCount = 0;
   game.gameIsOver = false;
+}
+
+bool pointInsideSegment(int p, int left, int right)
+{
+  return p >= left && p <= right;
+}
+
+bool pointInsideRectangle(Vec2 pos, Vec2 rectPos, Vec2 rectSize)
+{
+  if(!pointInsideSegment(pos.x, rectPos.x, rectPos.x + rectSize.x))
+    return false;
+
+  if(!pointInsideSegment(pos.y, rectPos.y, rectPos.y + rectSize.y))
+    return false;
+
+  return true;
 }
 
 void checkForCollisions(Game& game, GameInput input)
@@ -140,6 +156,18 @@ void checkForCollisions(Game& game, GameInput input)
   {
     if(!game.bikes[i].alive)
       continue;
+
+    for(auto& ob : game.obstacles)
+    {
+      auto& bike = game.bikes[i];
+
+      if(pointInsideRectangle(bike.pos, ob.pos, ob.size))
+      {
+        game.sink->onCrash(game.frameCount, { i });
+        bike.alive = false;
+        break;
+      }
+    }
 
     for(int j = i + 1; j < MAX_PLAYERS; ++j)
     {
@@ -277,7 +305,8 @@ void drawGame(Game& game, int* pixels)
 
     auto& bike = game.bikes[i];
 
-    game.terminal->drawHead(bike.pos, colorIndex);
+    if(bike.alive)
+      game.terminal->drawHead(bike.pos, colorIndex);
   }
 }
 
