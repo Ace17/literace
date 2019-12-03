@@ -97,14 +97,12 @@ struct PlayingScene : IScene
 {
   PlayingScene(Terminal* terminal_, Match* match_) : m_match(match_)
   {
-    m_game.terminal = terminal_;
-    m_game.sink = match_;
-    initGame(m_game);
+    m_game = createGame(terminal_, match_);
   }
 
   IScene* update(GameInput input) override
   {
-    int ret = updateGame(m_game, input);
+    int ret = m_game->update(input);
     std::vector<int> scores;
 
     for(auto& score : m_match->kills)
@@ -115,11 +113,11 @@ struct PlayingScene : IScene
 
   void draw(int* pixels) override
   {
-    drawGame(m_game, pixels);
+    m_game->draw(pixels);
   }
 
   Match* const m_match;
-  Game m_game {};
+  std::unique_ptr<IGame> m_game;
 };
 
 struct ScoreScene : IScene

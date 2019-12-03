@@ -102,8 +102,14 @@ bool isGameOver(Game& game)
 }
 }
 
-void initGame(Game& game)
+std::unique_ptr<IGame> createGame(ITerminal* terminal, IEventSink* sink)
 {
+  auto pGame = std::make_unique<Game>();
+  auto& game = *pGame;
+
+  game.terminal = terminal;
+  game.sink = sink;
+
   int k = 0;
 
   for(auto& bike : game.bikes)
@@ -133,6 +139,8 @@ void initGame(Game& game)
 
   game.frameCount = 0;
   game.gameIsOver = false;
+
+  return pGame;
 }
 
 bool pointInsideSegment(int p, int left, int width, int mod)
@@ -280,7 +288,7 @@ void oneTurn(Game& game, GameInput input)
   game.frameCount++;
 }
 
-int updateGame(Game& game, GameInput input)
+int Game::update(GameInput input)
 {
   static int turnAccumulator = 0;
   turnAccumulator += 100;
@@ -288,13 +296,13 @@ int updateGame(Game& game, GameInput input)
   while(turnAccumulator > 0)
   {
     turnAccumulator -= 500;
-    oneTurn(game, input);
+    oneTurn(*this, input);
   }
 
-  if(game.gameOverDelay > 0)
-    game.gameOverDelay--;
+  if(gameOverDelay > 0)
+    gameOverDelay--;
 
-  return game.gameIsOver && game.gameOverDelay == 0 ? 1 : 0;
+  return gameIsOver && gameOverDelay == 0 ? 1 : 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -312,8 +320,9 @@ void putPixel(int* pixels, int x, int y, int color)
 }
 }
 
-void drawGame(Game& game, int* pixels)
+void Game::draw(int* pixels)
 {
+  auto& game = *this;
   for(int row = 0; row < BOARD_HEIGHT; ++row)
   {
     for(int col = 0; col < BOARD_WIDTH; ++col)

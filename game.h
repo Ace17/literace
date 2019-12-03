@@ -1,7 +1,9 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 using std::vector;
+using std::unique_ptr;
 
 static auto const MAX_PLAYERS = 4;
 static auto const BOARD_WIDTH = 1024;
@@ -121,7 +123,16 @@ struct Obstacle
   bool solid = false;
 };
 
-struct Game
+struct IGame
+{
+  virtual ~IGame() = default;
+  virtual int update(GameInput input) = 0;
+  virtual void draw(int* pixels) = 0;
+};
+
+unique_ptr<IGame> createGame(ITerminal* terminal, IEventSink* sink);
+
+struct Game : IGame
 {
   Bike bikes[MAX_PLAYERS];
   vector<Obstacle> obstacles;
@@ -131,9 +142,8 @@ struct Game
   int frameCount;
   bool gameIsOver;
   int gameOverDelay;
-};
 
-void initGame(Game& game);
-int updateGame(Game& game, GameInput input);
-void drawGame(Game& game, int* pixels);
+  int update(GameInput input) override;
+  void draw(int* pixels) override;
+};
 
