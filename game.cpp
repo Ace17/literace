@@ -8,6 +8,21 @@
 
 namespace
 {
+struct Game : IGame
+{
+  Bike bikes[MAX_PLAYERS];
+  vector<Obstacle> obstacles;
+  char board[BOARD_WIDTH * BOARD_HEIGHT];
+  IEventSink* sink = &nullSink;
+  ITerminal* terminal = &nullTerminal;
+  int frameCount;
+  bool gameIsOver;
+  int gameOverDelay;
+
+  int update(GameInput input) override;
+  void draw(int* pixels) override;
+};
+
 const int dirs[][2] =
 {
   { 0, 0 },

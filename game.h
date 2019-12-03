@@ -132,18 +132,3 @@ struct IGame
 
 unique_ptr<IGame> createGame(ITerminal* terminal, IEventSink* sink);
 
-struct Game : IGame
-{
-  Bike bikes[MAX_PLAYERS];
-  vector<Obstacle> obstacles;
-  char board[BOARD_WIDTH * BOARD_HEIGHT];
-  IEventSink* sink = &nullSink;
-  ITerminal* terminal = &nullTerminal;
-  int frameCount;
-  bool gameIsOver;
-  int gameOverDelay;
-
-  int update(GameInput input) override;
-  void draw(int* pixels) override;
-};
-
