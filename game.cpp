@@ -21,6 +21,8 @@ struct Game : IGame
 
   int update(GameInput input) override;
   void draw(int* pixels) override;
+
+  void oneTurn(GameInput input);
 };
 
 const int dirs[][2] =
@@ -273,8 +275,10 @@ void updateObstacles(Game& game)
   }
 }
 
-void oneTurn(Game& game, GameInput input)
+void Game::oneTurn(GameInput input)
 {
+  auto& game = *this;
+
   if(isGameOver(game))
   {
     if(!game.gameIsOver)
@@ -311,7 +315,7 @@ int Game::update(GameInput input)
   while(turnAccumulator > 0)
   {
     turnAccumulator -= 500;
-    oneTurn(*this, input);
+    oneTurn(input);
   }
 
   if(gameOverDelay > 0)
@@ -337,18 +341,17 @@ void putPixel(int* pixels, int x, int y, int color)
 
 void Game::draw(int* pixels)
 {
-  auto& game = *this;
   for(int row = 0; row < BOARD_HEIGHT; ++row)
   {
     for(int col = 0; col < BOARD_WIDTH; ++col)
     {
-      int c = game.board[row * BOARD_WIDTH + col];
+      int c = board[row * BOARD_WIDTH + col];
       putPixel(pixels, col, row, getColor(c));
     }
   }
 
-  for(auto& ob : game.obstacles)
-    game.terminal->drawObstacle(ob.pos, ob.size);
+  for(auto& ob : obstacles)
+    terminal->drawObstacle(ob.pos, ob.size);
 
   // Draw player status
   for(int i = 0; i < MAX_PLAYERS; ++i)
@@ -359,10 +362,10 @@ void Game::draw(int* pixels)
     for(int col = 10; col < 20; ++col)
       putPixel(pixels, col, 10 + i * 10 + 0, color);
 
-    auto& bike = game.bikes[i];
+    auto& bike = bikes[i];
 
     if(bike.alive)
-      game.terminal->drawHead(bike.pos, colorIndex);
+      terminal->drawHead(bike.pos, colorIndex);
   }
 }
 
