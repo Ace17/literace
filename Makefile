@@ -5,6 +5,7 @@ LDFLAGS+=-g
 
 SRCS:=\
 	game.cpp \
+	audio.cpp \
 	display.cpp \
 	input.cpp \
 	main.cpp \

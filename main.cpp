@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include "SDL.h"
+#include "audio.h"
 #include "display.h"
 #include "input.h"
 #include "game.h"
@@ -158,6 +159,7 @@ int main()
   SDL_Init(SDL_INIT_EVERYTHING);
 
   auto display = createDisplay(BOARD_WIDTH, BOARD_HEIGHT);
+  auto audio = createAudio();
 
   struct App : ISceneFactory
   {
@@ -213,6 +215,7 @@ int main()
       {
         scene.reset(newScene);
         printf("New scene\n");
+	audio->beep();
       }
     }
 
