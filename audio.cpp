@@ -49,13 +49,44 @@ namespace
     {
       for(int i=0;i < sampleCount;++i)
       {
-        samples[i] = sin(m_time * m_sineFreq * 2 * M_PI) * m_env * 0.3;
-        m_time += 1.0 / 48000.0;
+        m_lfophase += 10.0 / 48000.0;
+        if(m_lfophase > 1.0)
+          m_lfophase -= 1.0;
+
+        auto freq = m_sineFreq + mySin(m_lfophase) * 20;
+
+        m_phase1 += freq / 48000.0;
+        if(m_phase1 > 1.0)
+          m_phase1 -= 1.0;
+
+        m_phase2 += freq * 1.5 / 48000.0;
+        if(m_phase2 > 1.0)
+          m_phase2 -= 1.0;
+
         m_env *= 0.9999;
+
+        double osc = 0.0;
+
+        osc += mySquare(m_phase1);
+        osc += mySquare(m_phase2);
+
+        samples[i] = osc * m_env * 0.3;
       }
     }
 
-    double m_time = 0;
+    static double mySin(double t)
+    {
+      return sin(t * 2 * M_PI);
+    }
+
+    static double mySquare(double t)
+    {
+      return t < 0.5 ? -1 : 1;
+    }
+
+    double m_phase1 = 0;
+    double m_phase2 = 0;
+    double m_lfophase = 0;
     double m_sineFreq = 440.0;
     double m_env = 0;
   };
